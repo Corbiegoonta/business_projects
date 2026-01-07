@@ -1,0 +1,164 @@
+from flask import Flask, request, jsonify, render_template_string
+from pick_team import delete_user_account, add_new_user_to_db, check_if_email_is_valid, check_if_user_exists, check_if_username_is_valid, authenticate_user, check_if_password_is_valid, check_if_player_in_db, add_new_player_with_stats_to_db, get_user_uuid, get_player_pool_from_db, balance_teams
+import random
+from website import NEW_HOME_HTML, PICK_TEAM_HTML, PICK_TEAM_HTML_LOGGED_IN
+
+
+app = Flask(__name__)
+app.secret_key = 'your-secret-key-here-change-in-production'  # Required for sessions
+
+@app.route('/')
+def home():
+    user = request.cookies.get('user', None)
+    return render_template_string(NEW_HOME_HTML, user=user)
+
+@app.route('/pick_team_logged_in')
+def pick_team():
+    user = request.cookies.get('user', None)
+    if not user:
+        return render_template_string(PICK_TEAM_HTML)
+    return render_template_string(PICK_TEAM_HTML_LOGGED_IN, user=user)
+
+@app.route('/pick_team_not_logged_in')
+def pick_team_not_logged_in():
+    return render_template_string(PICK_TEAM_HTML)
+
+@app.route('/create_account', methods=['POST'])
+def create_account():
+    data = request.get_json()
+    email = data.get('email', '')
+    username = data.get('username', '')
+    password = data.get('password', '')
+    
+    email_check = check_if_email_is_valid(email)
+    username_check = check_if_username_is_valid(username)
+    password_check = check_if_password_is_valid(password)
+    
+    if email_check is not True:
+        return jsonify({"error": email_check, "status": 400})
+    if username_check is not True:
+        return jsonify({"error": username_check, "status": 400})
+    if password_check is not True:
+        return jsonify({"error": password_check, "status": 400})
+    
+    if check_if_user_exists(email, username, database_name="testing") is True:
+        add_new_user_to_db(username, email, password, database_name="testing")
+        return jsonify({"message": "Account Created Successfully", "status": 201})
+    else:
+        return jsonify({"error": "User with this email or username already exists.", "status": 400})
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    emailusername = data.get('emailusername', '')
+    password = data.get('password', '')
+    
+    resp, uname = authenticate_user(emailusername, password, database_name="testing")
+    if resp is True:
+        response = jsonify({"message": "Login Successful", "status": 200})
+        response.set_cookie("user", uname, max_age=60*60*24*7)  # 7 days
+        return response
+    else:
+        return jsonify({"error": "Invalid email/username or password.", "status": 400})
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    response = jsonify({"message": "Logged out successfully"})
+    response.set_cookie("user", "", expires=0)
+    return response
+
+@app.route('/add_player', methods=['POST'])
+def add_player():
+    data = request.get_json()
+    player_name = data.get('name', '')
+    wins = data.get('wins', 0)
+    draws = data.get('draws', 0)
+    losses = data.get('losses', 0)
+    number_of_games = data.get('number_of_games', wins + draws + losses)
+    
+    created_by = request.cookies.get("user")
+    if not created_by:
+        return jsonify({"error": "Must be logged in to add players", "status": 401})
+    
+    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
+    player_check = check_if_player_in_db(player_name, database_name="testing")
+    
+    if player_check is True:
+        add_new_player_with_stats_to_db(
+            created_by=user_uuid, 
+            player_name=player_name, 
+            number_of_games=number_of_games, 
+            wins=wins, 
+            losses=losses,
+            draws=draws, 
+            database_name="testing"
+        )
+        return jsonify({"message": "Player created successfully", "status": 201})
+    else:
+        return jsonify({"error": player_check, "status": 400})
+
+@app.route('/api/get_players', methods=['GET'])
+def get_players():
+    created_by = request.cookies.get("user")
+    print("User UUID from cookie:", created_by)
+    # if not created_by:
+    #     return jsonify({"error": "Must be logged in to add players", "status": 401})
+    
+    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
+    # Mock data - replace with actual database query
+    players = get_player_pool_from_db(number_of_players=10, user_id=user_uuid, database_name="testing")
+
+    return jsonify({"players": players})
+
+@app.route('/api/autoselect', methods=['POST'])
+def autoselect():
+    data = request.get_json()
+    n = data.get('n', 10)
+    created_by = request.cookies.get("user")
+    # if not created_by:
+    #     return jsonify({"error": "Must be logged in to add players", "status": 401})
+    
+    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
+    # Mock data - replace with actual database query
+    players = get_player_pool_from_db(number_of_players=n, user_id=user_uuid, database_name="testing")
+    print(players)
+    # Mock implementation - replace with actual logic
+    # This should fetch players and select them based on some algorithm
+    chosen_players = random.sample(players, min(n, len(players)))
+    
+    # chosen = mock_players[:min(n, len(mock_players))]
+    print(chosen_players)
+    return jsonify({"chosen": chosen_players})
+
+@app.route('/api/balanceteams', methods=['POST'])
+def balance_the_teams():
+    created_by = request.cookies.get("user")
+    data = request.get_json()
+    teamA = data.get('teamA', [])
+    teamB = data.get('teamB', [])
+    player_names = []
+    if teamA + teamB == []:
+        return jsonify({"error": "No players in teams to balance"}), 400
+    else:
+        for player in teamA + teamB:
+            player_names.append(player['name'])
+        print("Balancing teams:", player_names)
+        teams = balance_teams(player_names, created_by)
+    # Implement your balancing logic here
+    # return jsonify({"message": "Teams balanced successfully"})
+        return jsonify({"teamA": teams[0], "teamB": teams[1]})
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    created_by = request.cookies.get("user")
+    if not created_by:
+        return jsonify({"error": "Must be logged in to delete account", "status": 401})
+
+    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
+    delete_user_account(user_uuid, database_name="testing")
+    response = jsonify({"message": "Account deleted successfully"})
+    response.set_cookie("user", "", expires=0)
+    return response
+
+if __name__ == '__main__':
+    app.run(debug=True)

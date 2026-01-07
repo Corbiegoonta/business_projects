@@ -1,0 +1,68 @@
+-- CREATE DATABASE testing
+-- DROP TABLE IF EXISTS players;
+-- CREATE SCHEMA tt1
+-- CREATE TABLE tt1.players1 (
+-- 	player_name text,
+-- 	number_of_games int,
+-- 	wins int,
+-- 	losses int,
+-- 	draws int,
+-- 	points int,
+-- 	win_rate float,
+-- 	points_win_rate float,
+-- 	points_per_game float
+-- );
+
+-- INSERT INTO players1 (
+--     player_name, 
+--     number_of_games, 
+--     wins, 
+--     losses, 
+--     draws, 
+--     points, 
+--     win_rate, 
+--     points_win_rate, 
+--     points_per_game
+-- )
+-- VALUES
+-- ('Liam Carter', 30, 18, 8, 4, 58, 0.60, 0.64, 1.93),
+-- ('Noah Williams', 28, 14, 10, 4, 46, 0.50, 0.55, 1.64),
+-- ('Oliver Johnson', 32, 20, 7, 5, 65, 0.63, 0.68, 2.03),
+-- ('Elijah Smith', 25, 10, 10, 5, 35, 0.40, 0.47, 1.40),
+-- ('James Brown', 27, 12, 9, 6, 42, 0.44, 0.52, 1.56),
+-- ('Benjamin Jones', 33, 21, 8, 4, 67, 0.64, 0.68, 2.03),
+-- ('Lucas Miller', 29, 13, 11, 5, 44, 0.45, 0.51, 1.52),
+-- ('Henry Davis', 26, 9, 11, 6, 33, 0.35, 0.42, 1.27),
+-- ('Alexander Garcia', 31, 17, 9, 5, 56, 0.55, 0.60, 1.81),
+-- ('William Martinez', 24, 15, 6, 3, 48, 0.63, 0.67, 2.00),
+-- ('Daniel Rodriguez', 30, 16, 9, 5, 53, 0.53, 0.59, 1.77),
+-- ('Michael Hernandez', 28, 11, 12, 5, 38, 0.39, 0.45, 1.36),
+-- ('Ethan Lopez', 27, 13, 8, 6, 45, 0.48, 0.56, 1.67),
+-- ('Jacob Gonzalez', 31, 19, 8, 4, 61, 0.61, 0.66, 1.97),
+-- ('Mason Wilson', 30, 14, 11, 5, 47, 0.47, 0.52, 1.57),
+-- ('Logan Anderson', 29, 16, 9, 4, 52, 0.55, 0.60, 1.79),
+-- ('Jackson Thomas', 33, 18, 10, 5, 59, 0.55, 0.60, 1.79),
+-- ('Sebastian Taylor', 26, 15, 7, 4, 49, 0.58, 0.63, 1.88),
+-- ('Jack Moore', 32, 17, 10, 5, 56, 0.53, 0.58, 1.75),
+-- ('Aiden White', 28, 12, 11, 5, 41, 0.43, 0.49, 1.46),
+-- ('Matthew Clark', 27, 11, 13, 3, 36, 0.41, 0.44, 1.33),
+-- ('Joseph Lewis', 30, 13, 12, 5, 44, 0.43, 0.49, 1.47),
+-- ('Samuel Young', 31, 15, 11, 5, 50, 0.48, 0.54, 1.61),
+-- ('David Hall', 29, 9, 13, 7, 34, 0.31, 0.39, 1.17),
+-- ('Carter Allen', 30, 20, 7, 3, 63, 0.67, 0.70, 2.10),
+-- ('Wyatt King', 25, 16, 6, 3, 51, 0.64, 0.68, 2.04),
+-- ('John Wright', 33, 22, 7, 4, 70, 0.67, 0.71, 2.12),
+-- ('Luke Scott', 26, 12, 9, 5, 41, 0.46, 0.53, 1.58),
+-- ('Owen Green', 28, 17, 8, 3, 54, 0.61, 0.64, 1.93),
+-- ('Gabriel Adams', 30, 10, 14, 6, 36, 0.33, 0.40, 1.20);
+
+-- COPY players(player_name, wins, losses, draws, points, win_rate, points_win_rate, number_of_games)
+-- -- player_name,wins,losses,draws,points,win_rate,points_win_rate,number_of_games_played
+-- FROM 'C:\Users\nickc\Desktop\Code\Personal Projects\team_picker\player_info.csv'
+-- DELIMITER ','
+-- CSV HEADER;
+
+-- SELECT * FROM players
+
+-- SELECT * FROM pg_settings
+-- WHERE name LIKE '%hostname%'

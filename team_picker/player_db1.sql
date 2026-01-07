@@ -1,0 +1,61 @@
+-- INSERT INTO matches (
+--     match_id,
+--     user_id,
+--     team_1,
+--     team_2,
+--     team_1_score,
+--     team_2_score,
+--     match_date,
+--     location,
+--     referee,
+--     outcome
+-- )
+-- VALUES
+-- (1, 101, 'Liam Carter FC', 'Noah United', 3, 1, '2025-01-10 15:00:00', 'London Stadium', 'Ref A. Clarke', 'Team 1 Win'),
+-- (2, 101, 'Oliver City', 'Elijah Town', 2, 2, '2025-01-12 18:30:00', 'Manchester Arena', 'Ref J. Stone', 'Draw'),
+-- (3, 101, 'James Borough', 'Benjamin Athletic', 1, 4, '2025-01-15 20:00:00', 'Birmingham Park', 'Ref P. Harris', 'Team 2 Win'),
+-- (4, 101, 'Lucas Rovers', 'Henry FC', 0, 0, '2025-01-18 14:00:00', 'Oxford Stadium', 'Ref G. Price', 'Draw'),
+-- (5, 102, 'Garcia Wanderers', 'Martinez United', 2, 1, '2025-01-21 19:45:00', 'Liverpool Field', 'Ref K. Brooks', 'Team 1 Win'),
+-- (6, 102, 'Rodriguez City', 'Hernandez Town', 1, 3, '2025-01-23 16:00:00', 'Newcastle Grounds', 'Ref S. Douglas', 'Team 2 Win'),
+-- (7, 102, 'Lopez FC', 'Gonzalez Athletic', 4, 2, '2025-01-26 17:30:00', 'Brighton Park', 'Ref V. Turner', 'Team 1 Win'),
+-- (8, 103, 'Wilson Club', 'Anderson FC', 3, 3, '2025-01-28 20:00:00', 'Leeds Stadium', 'Ref D. Howard', 'Draw'),
+-- (9, 103, 'Thomas Rovers', 'Taylor City', 0, 2, '2025-01-30 15:00:00', 'Cardiff Field', 'Ref W. Bennett', 'Team 2 Win'),
+-- (10, 104, 'Moore United', 'White FC', 1, 0, '2025-02-02 18:00:00', 'Chelsea Ground', 'Ref R. Morris', 'Team 1 Win'),
+-- (11, 104, 'Clark City', 'Lewis Town', 2, 2, '2025-02-05 14:30:00', 'London Stadium', 'Ref A. Clarke', 'Unknown'),
+-- (12, 105, 'Young Rovers', 'Hall FC', 1, 1, '2025-02-07 16:00:00', 'Manchester Arena', 'Ref J. Stone', 'Unknown'),
+-- (13, 105, 'Allen United', 'King Athletic', 3, 0, '2025-02-10 18:00:00', 'Birmingham Park', 'Ref P. Harris', 'Team 1 Win'),
+-- (14, 106, 'Wright City', 'Scott FC', 0, 1, '2025-02-12 19:15:00', 'Leeds Stadium', 'Ref K. Brooks', 'Team 2 Win'),
+-- (15, 106, 'Green Borough', 'Adams Wanderers', 1, 1, '2025-02-15 20:00:00', 'Brighton Park', 'Ref S. Douglas', 'Draw'),
+-- (16, 107, 'Liam Carter FC', 'Oliver City', 2, 3, '2025-02-18 17:00:00', 'Oxford Stadium', 'Ref G. Price', 'Team 2 Win'),
+-- (17, 107, 'Noah United', 'James Borough', 0, 0, '2025-02-20 21:00:00', 'Newcastle Grounds', 'Ref V. Turner', 'Unknown'),
+-- (18, 108, 'Benjamin Athletic', 'Lucas Rovers', 4, 3, '2025-02-23 19:30:00', 'Chelsea Ground', 'Ref W. Bennett', 'Team 1 Win'),
+-- (19, 108, 'Henry FC', 'Garcia Wanderers', 1, 2, '2025-02-25 15:00:00', 'Cardiff Field', 'Ref R. Morris', 'Team 2 Win'),
+-- (20, 109, 'Martinez United', 'Rodriguez City', 0, 0, '2025-02-27 18:45:00', 'Liverpool Field', 'Ref A. Clarke', 'Unknown');
+
+-- SELECT * FROM matches
+-- WHERE user_id=105 
+-- ORDER BY match_date DESC
+-- LIMIT 1
+
+-- INSERT INTO users (
+--     user_id,
+--     username,
+--     email,
+--     password_hash
+-- )
+-- VALUES
+-- (101, 'liam_carter', 'liam.carter@example.com', 'hash_9f82b7a1c4d3'),
+-- (102, 'noah_will', 'noah.williams@example.com', 'hash_7a63e8d4b2c1'),
+-- (103, 'oliver_j', 'oliver.johnson@example.com', 'hash_c4a1b8d93fe2'),
+-- (104, 'elijah_s', 'elijah.smith@example.com', 'hash_a12f8d9e3b7c'),
+-- (105, 'james_b', 'james.brown@example.com', 'hash_f72e91a8c3d4'),
+-- (106, 'ben_jones', 'benjamin.jones@example.com', 'hash_d4b3a9f61c2e'),
+-- (107, 'lucas_m', 'lucas.miller@example.com', 'hash_1af83b92c7d4'),
+-- (108, 'henry_d', 'henry.davis@example.com', 'hash_e38bd2f19ca7'),
+-- (109, 'alex_g', 'alex.garcia@example.com', 'hash_92bd7ac431ef'),
+-- (110, 'w_martinez', 'william.martinez@example.com', 'hash_cd812af9b27e');
+
+SELECT * FROM users
+-- DELETE FROM matche
+
+
