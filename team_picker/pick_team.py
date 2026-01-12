@@ -16,6 +16,8 @@ import copy
 import uuid
 from flask import Flask, request, jsonify, render_template_string
 import bcrypt
+import smtplib
+from email.message import EmailMessage
 # from models import User, Department  # Assuming the models above
 
 app = Flask(__name__)
@@ -280,6 +282,21 @@ def create_player_log_table(database_name: str="postgres"):
     )
     metadata.create_all(sqlalchemy_engine)
 
+def create_password_reset_table(database_name: str="postgres"):
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
+    metadata = sqlalchemy.MetaData()
+    sqlalchemy.Table("password_resets", metadata,
+        sqlalchemy.Column('reset_id', sqlalchemy.UUID, primary_key=True),
+        sqlalchemy.Column('user_id', sqlalchemy.UUID, foreign_key=True),
+        sqlalchemy.Column('email', sqlalchemy.String),
+        sqlalchemy.Column('reset_token', sqlalchemy.String),
+        sqlalchemy.Column('token_expiry', sqlalchemy.DateTime),
+        sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
+        sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
+    )
+    metadata.create_all(sqlalchemy_engine)
+
 def add_new_match_to_db(user_id: uuid.UUID, team_1: str="Team_1", team_2: str="Team_2", team_1_rating: float=0.0, team_2_rating: float=0.0, team_1_players: list[uuid.UUID]=[], team_2_players: list[uuid.UUID]=[], team_1_score: int=0, team_2_score: int=0, location: str="Unknown", referee: str="Unknown", match_datetime: datetime.datetime = datetime.datetime.now(), outcome: str = "Unknown", created_datetime: datetime.datetime = datetime.datetime.now(), updated_datetime: datetime.datetime = datetime.datetime.now(), database_name: str="postgres"):
     load_dotenv()
     sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
@@ -515,11 +532,11 @@ def check_if_player_in_db(player_name: str, database_name: str="postgres") -> bo
         return "A player with this name already exists."
     return True
 
-def get_user_uuid(username: str, database_name: str="postgres"):
+def get_user_uuid(username: str="", email: str="", database_name: str="postgres"):
     load_dotenv()
     sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
     connection = sqlalchemy_engine.connect()
-    query = f"SELECT user_id FROM users WHERE username = '{username}';"
+    query = f"SELECT user_id FROM users WHERE username = '{username}' OR email = '{email}';"
     result = connection.execute(sqlalchemy.text(query))
     print("Username to find:", username)
     print(username)
@@ -529,7 +546,7 @@ def get_user_uuid(username: str, database_name: str="postgres"):
     if result:
         return result.fetchone()
     else:
-        return f"Username {username} does not exist."
+        return f"Username {username} or email {email} does not exist."
     
 def retrieve_user_players(user_id: uuid.UUID, database_name: str="postgres"):
     load_dotenv()
@@ -556,6 +573,70 @@ def delete_user_account(user_id: uuid.UUID, database_name: str="postgres"):
         connection.execute(stmtm)
         connection.execute(stmtl)
         connection.commit()
+
+def check_database_for_email(email: str, database_name: str="postgres") -> bool:
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
+    connection = sqlalchemy_engine.connect()
+    query = f"SELECT * FROM users WHERE email = '{email}';"
+    result = connection.execute(sqlalchemy.text(query))
+    # print(result)
+    row = result.fetchone()
+    # print(row)
+    if row:
+        return True
+    return False
+
+def put_password_reset_token_in_db(user_id: uuid.UUID, email: str, token: str, database_name: str="postgres"):
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
+    new_uuid = uuid.uuid4()
+    connection = sqlalchemy_engine.connect()
+    query = f"INSERT INTO password_resets (reset_id, user_id, email, reset_token, token_expiry, created_datetime, updated_datetime) VALUES ('{new_uuid}', '{user_id[0]}', '{email}', '{token}', NOW() + INTERVAL '1 hour', NOW(), NOW());"
+    connection.execute(sqlalchemy.text(query))
+    connection.commit()
+
+def send_password_reset_email(email: str, password_reset_link: str):
+    msg = EmailMessage()
+    msg.set_content(f"Click the link to reset your password: {password_reset_link}")
+    msg['Subject'] = 'Password Reset Request'
+    msg['From'] = 'nicholaicorbie1@gmail.com'
+    msg['To'] = email
+    print("Connecting to SMTP server...")
+    with smtplib.SMTP('smtp.gmail.com', port=587) as s:
+        s.starttls()
+        s.login('nicholaicorbie1@gmail.com', 'lyuc ghtp jieq qpjj')
+        print("Sending email...")
+        s.send_message(msg)
+        print("Email sent.")
+
+def get_password_reset_tokens(database_name: str="postgres"):
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
+    connection = sqlalchemy_engine.connect()
+    query = f"SELECT reset_token FROM password_resets WHERE token_expiry > NOW() AND token_expiry < NOW() + INTERVAL '1 hour';"
+    result = connection.execute(sqlalchemy.text(query))
+    rows = result.fetchall()
+    return rows
+
+def replace_user_password(email: str, new_password: str, database_name: str="postgres"):
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
+    connection = sqlalchemy_engine.connect()
+    query = f"UPDATE users SET password_hash = '{create_password_hash(new_password)}', updated_datetime = NOW() WHERE email = '{email}';"
+    connection.execute(sqlalchemy.text(query))
+    connection.commit()
+
+def get_user_email_from_token(token: str, database_name: str="postgres"):
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
+    connection = sqlalchemy_engine.connect()
+    query = f"SELECT email FROM password_resets WHERE reset_token = '{token}' AND token_expiry > NOW();"
+    result = connection.execute(sqlalchemy.text(query))
+    row = result.fetchone()
+    if row:
+        return row[0]
+    return None
 
 def balance_teams(list_of_player_names: list, username: str):
     user_uuid = get_user_uuid(username, database_name="testing")[0]
@@ -1206,7 +1287,7 @@ if __name__ == "__main__":
     # process_match_day()
     # create_matches_table("testing")
     # create_player_log_table("testing")
-    create_players_table("testing")
+    create_password_reset_table("testing")
     # create_users_table("testing")
     # check_if_user_exists("nicholaicorbie@yahoo.com", database_name="testing")
     # print(authenticate_user("nicholaicorbie@yahoo.com", "1234", database_name="testing"))

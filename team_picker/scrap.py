@@ -1007,7 +1007,7 @@ window.onclick = function(event) {
 </html>
 """
 
-"""
+TUTORIAL_HTML = """
 <!doctype html>
 <html>
 <head>
@@ -1023,6 +1023,41 @@ body {
     min-height: 100vh;
     margin: 0;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Top right login area */
+.top-right {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 20px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 100;
+}
+
+.username-display {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.top-right button {
+    margin: 0;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.logout-btn {
+    background: #dc3545 !important;
+}
+
+.logout-btn:hover {
+    background: #c82333 !important;
 }
 
 .card {

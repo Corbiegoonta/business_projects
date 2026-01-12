@@ -209,6 +209,13 @@ button:hover {
     outline: none;
     border-color: #667eea;
 }
+.modal-content a {
+    transition: opacity 0.3s;
+}
+.modal-content a:hover {
+    opacity: 0.8;
+    text-decoration: underline !important;
+}
 .button-group {
     margin-top: 20px;
 }
@@ -300,6 +307,9 @@ button:hover {
         <h3>Login</h3>
         <input id="loginUser" placeholder="Email or Username"/>
         <input id="loginPass" placeholder="Password" type="password"/>
+        <div style="text-align: right; margin-top: 10px; margin-bottom: 10px;">
+            <a href="/forgot_password" style="color: #667eea; text-decoration: none; font-size: 13px; font-weight: 600;">Forgot Password?</a>
+        </div>
         <div class="button-group">
             <button onclick="submitLogin()">Login</button>
             <button onclick="closeLogin()" style="background:#6c757d">Close</button>
@@ -1649,6 +1659,449 @@ window.onclick = function(event) {
     }
 }
 </script>
+</body>
+</html>
+"""
+# Add this to your HTML templates section
+
+FORGOT_PASSWORD_HTML = """
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Forgot Password - Team Picker</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+    background: #fff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+}
+
+h2 { 
+    margin-top: 0; 
+    color: #333;
+    font-size: 28px;
+}
+
+.description {
+    color: #666;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+button {
+    width: 100%;
+    margin: 10px 0;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    background: #667eea;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+button.secondary {
+    background: #6c757d;
+}
+
+button.secondary:hover {
+    background: #5a6268;
+}
+
+.back-link {
+    margin-top: 20px;
+    display: block;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.success-message {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🔐 Forgot Password?</h2>
+    <p class="description">
+        Enter your email address and we'll send you a link to reset your password.
+    </p>
+    
+    <div id="successMessage" class="success-message"></div>
+    <div id="errorMessage" class="error-message"></div>
+    
+    <div id="resetForm">
+        <input id="emailInput" type="email" placeholder="Enter your email address" />
+        <button onclick="submitReset()">Send Reset Link</button>
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+</div>
+
+<script>
+async function submitReset() {
+    const email = document.getElementById('emailInput').value.trim();
+    const errorMsg = document.getElementById('errorMessage');
+    const successMsg = document.getElementById('successMessage');
+    
+    // Hide previous messages
+    errorMsg.style.display = 'none';
+    successMsg.style.display = 'none';
+    
+    if (!email) {
+        errorMsg.textContent = 'Please enter your email address';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        errorMsg.textContent = 'Please enter a valid email address';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    try {
+        const resp = await fetch('/request_password_reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        
+        const data = await resp.json();
+        
+        if (data.status === 400) {
+            errorMsg.textContent = data.error;
+            errorMsg.style.display = 'block';
+            return;
+        }
+        
+        // Show success message
+        successMsg.innerHTML = `
+            <strong>✓ Check your email!</strong><br>
+            ${data.message}
+            ${data.dev_token ? '<br><br><small style="color:#856404">Development mode: Check console for reset link</small>' : ''}
+        `;
+        successMsg.style.display = 'block';
+        
+        // Clear form
+        document.getElementById('emailInput').value = '';
+        
+        // Log dev token if available
+        if (data.dev_token) {
+            console.log('Reset token:', data.dev_token);
+            console.log('Reset URL:', `/reset_password?token=${data.dev_token}`);
+        }
+        
+    } catch (e) {
+        errorMsg.textContent = 'An error occurred. Please try again later.';
+        errorMsg.style.display = 'block';
+        console.error('Error:', e);
+    }
+}
+
+// Allow Enter key to submit
+document.getElementById('emailInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        submitReset();
+    }
+});
+</script>
+
+</body>
+</html>
+"""
+
+RESET_PASSWORD_HTML = """
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Reset Password - Team Picker</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+    background: #fff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+}
+
+h2 { 
+    margin-top: 0; 
+    color: #333;
+    font-size: 28px;
+}
+
+.description {
+    color: #666;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+label {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 5px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.password-requirements {
+    text-align: left;
+    font-size: 12px;
+    color: #666;
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+button {
+    width: 100%;
+    margin: 15px 0;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    background: #667eea;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.success-message {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🔑 Reset Your Password</h2>
+    <p class="description">
+        Enter your new password below.
+    </p>
+    
+    <div id="successMessage" class="success-message"></div>
+    <div id="errorMessage" class="error-message"></div>
+    
+    <div id="resetForm">
+        <label>New Password</label>
+        <input id="passwordInput" type="password" placeholder="Enter new password" />
+        
+        <label>Confirm Password</label>
+        <input id="confirmPasswordInput" type="password" placeholder="Confirm new password" />
+        
+        <div class="password-requirements">
+            ℹ️ Password must be at least 8 characters long
+        </div>
+        
+        <button onclick="submitNewPassword()">Reset Password</button>
+    </div>
+</div>
+
+<script>
+const token = '{{ token }}';
+
+async function submitNewPassword() {
+    const password = document.getElementById('passwordInput').value;
+    const confirmPassword = document.getElementById('confirmPasswordInput').value;
+    const errorMsg = document.getElementById('errorMessage');
+    const successMsg = document.getElementById('successMessage');
+    
+    // Hide previous messages
+    errorMsg.style.display = 'none';
+    successMsg.style.display = 'none';
+    
+    if (!password) {
+        errorMsg.textContent = 'Please enter a password';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    if (password.length < 6) {
+        errorMsg.textContent = 'Password must be at least 6 characters long';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+     try {
+        const resp = await fetch('/submit_password_reset', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ 
+                token: token,
+                password: password,
+                confirm_password: confirmPassword
+            })
+        });
+        
+        if (!resp.ok) {
+            throw new Error(`HTTP error! status: ${resp.status}`);
+        }
+        
+        const data = await resp.json();
+        
+        if (data.status === 400) {
+            errorMsg.textContent = data.error;
+            errorMsg.style.display = 'block';
+            return;
+        }
+        
+        // Show success message
+        successMsg.innerHTML = `
+            <strong>✓ Success!</strong><br>
+            ${data.message}<br>
+            <small>Redirecting to login...</small>
+        `;
+        successMsg.style.display = 'block';
+        
+        // Hide form
+        document.getElementById('resetForm').style.display = 'none';
+        
+        // Redirect to home page after 3 seconds
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 3000);
+        
+    } catch (e) {
+        errorMsg.textContent = 'An error occurred. Please try again later.';
+        errorMsg.style.display = 'block';
+        console.error('Error:', e);
+    }
+}
+
+// Allow Enter key to submit
+document.getElementById('confirmPasswordInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        submitNewPassword();
+    }
+});
+</script>
+
 </body>
 </html>
 """
