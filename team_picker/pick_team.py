@@ -18,11 +18,17 @@ from flask import Flask, request, jsonify, render_template_string
 import bcrypt
 import smtplib
 from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 # from models import User, Department  # Assuming the models above
 
 app = Flask(__name__)
 
 load_dotenv()
+MY_EMAIL = os.getenv('MY_EMAIL')
+MY_APP_PASSWORD = os.getenv('MY_APP_PASSWORD')
+
 sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/testing')
 players_table = sqlalchemy.Table('players', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 session = Session(sqlalchemy_engine)
@@ -379,7 +385,7 @@ def add_new_player_with_stats_to_db(created_by: uuid.UUID, player_name: str, num
     # query = f"INSERT INTO players (player_name, number_of_games, wins, losses, draws, points, win_rate, points_win_rate, points_per_game) VALUES ('{player_name}', {number_of_games}, {wins}, {losses}, {draws}, {points}, {win_rate}, {points_win_rate}, {points_per_game});"
     # connection.execute(sqlalchemy.text(query))
 
-def add_new_user_to_db(username: str, email: str, password_hash: str, database_name: str="postgres", created_datetime=datetime.datetime.now(), updated_datetime=datetime.datetime.now()):
+def add_new_user_to_db(username: str, email: str, password_hash: str, is_active: int = 0, database_name: str="postgres", created_datetime=datetime.datetime.now(), updated_datetime=datetime.datetime.now()):
     load_dotenv()
     sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
     table = sqlalchemy.Table('users', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
@@ -389,6 +395,7 @@ def add_new_user_to_db(username: str, email: str, password_hash: str, database_n
         username=username,
         email=email,
         password_hash=create_password_hash(password_hash),
+        is_active=is_active,
         created_by=new_user_uuid,
         updated_by=new_user_uuid,
         created_datetime=created_datetime,
@@ -600,12 +607,12 @@ def send_password_reset_email(email: str, password_reset_link: str):
     msg = EmailMessage()
     msg.set_content(f"Click the link to reset your password: {password_reset_link}")
     msg['Subject'] = 'Password Reset Request'
-    msg['From'] = 'nicholaicorbie1@gmail.com'
+    msg['From'] = MY_EMAIL
     msg['To'] = email
     print("Connecting to SMTP server...")
     with smtplib.SMTP('smtp.gmail.com', port=587) as s:
         s.starttls()
-        s.login('nicholaicorbie1@gmail.com', 'lyuc ghtp jieq qpjj')
+        s.login(MY_EMAIL, MY_APP_PASSWORD)
         print("Sending email...")
         s.send_message(msg)
         print("Email sent.")
@@ -637,6 +644,344 @@ def get_user_email_from_token(token: str, database_name: str="postgres"):
     if row:
         return row[0]
     return None
+
+def get_active_activation_tokens_for_email(email: str, database_name: str = "postgres"):
+    """Retrieve all active activation tokens for a specific email from the database"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = "SELECT token FROM activation_tokens WHERE expires_at > NOW() and email = :email"
+    result = connection.execute(sqlalchemy.text(query), {"email": email})
+    tokens = [row[0] for row in result.fetchall()]
+    connection.close()
+    
+    return tokens
+
+def put_activation_token_in_db(user_uuid: str, email: str, token: str, database_name: str="postgres"):
+    """Store activation token in database with expiry"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    activation_tokens_table = sqlalchemy.Table('activation_tokens', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+    tokens_insert = sqlalchemy.insert(activation_tokens_table).values(
+        user_id=user_uuid[0],
+        email=email,
+        token=token,
+        expires_at=datetime.datetime.now() + datetime.timedelta(hours=24),  # Token valid for 24 hours
+        created_at=datetime.datetime.now()
+    )
+    with sqlalchemy_engine.connect() as connection:
+        connection.execute(tokens_insert)
+        connection.commit()
+
+
+
+def get_user_email_from_activation_token(token: str, database_name: str = "postgres"):
+    """Get user email from activation token if valid"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+
+    query = """
+        SELECT email FROM activation_tokens
+        WHERE token = :token AND expires_at > NOW()
+    """
+    result = connection.execute(sqlalchemy.text(query), {"token": token})
+    row = result.fetchone()
+    connection.close()
+
+    return row[0] if row else None
+
+
+def activate_user_account(email: str, database_name: str = "postgres"):
+    """Set user account as active"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+
+    query = """
+        UPDATE users
+        SET is_active = 1, activated_at = :activated_at
+        WHERE email = :email
+    """
+    connection.execute(
+        sqlalchemy.text(query),
+        {"activated_at": datetime.datetime.now(), "email": email}
+    )
+    connection.commit()
+    connection.close()
+
+
+def delete_activation_token(token: str, database_name: str = "postgres"):
+    """Remove activation token after use"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+
+    query = "DELETE FROM activation_tokens WHERE token = :token"
+    connection.execute(sqlalchemy.text(query), {"token": token})
+    connection.commit()
+    connection.close()
+    connection = sqlalchemy_engine.connect()
+  
+def get_user_email_from_activation_token(token: str, database_name: str = "postgres"):
+    """Get user email from activation token if valid"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = """
+        SELECT email FROM activation_tokens 
+        WHERE token = :token AND expires_at > NOW()
+    """
+    result = connection.execute(sqlalchemy.text(query), {"token": token})
+    row = result.fetchone()
+    connection.close()
+    
+    return row[0] if row else None
+
+
+def activate_user_account(email: str, database_name: str = "postgres"):
+    """Set user account as active"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = """
+        UPDATE users 
+        SET is_active = 1, activated_at = :activated_at
+        WHERE email = :email
+    """
+    connection.execute(
+        sqlalchemy.text(query),
+        {"activated_at": datetime.datetime.now(), "email": email}
+    )
+    connection.commit()
+    connection.close()
+
+
+def delete_activation_token(token: str, database_name: str = "postgres"):
+    """Remove activation token after use"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = "DELETE FROM activation_tokens WHERE token = :token"
+    connection.execute(sqlalchemy.text(query), {"token": token})
+    connection.commit()
+    connection.close()
+
+
+def delete_old_activation_tokens(email: str, database_name: str = "postgres"):
+    """Remove old activation tokens for a user"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = "DELETE FROM activation_tokens WHERE email = :email"
+    connection.execute(sqlalchemy.text(query), {"email": email})
+    connection.commit()
+    connection.close()
+
+
+def is_user_activated(email: str, database_name: str = "postgres"):
+    """Check if user account is activated"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = "SELECT is_active FROM users WHERE email = :email"
+    result = connection.execute(sqlalchemy.text(query), {"email": email})
+    row = result.fetchone()
+    connection.close()
+    
+    return row[0]
+
+
+def get_email_from_username(username: str, database_name: str = "postgres"):
+    """Get email address from username"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = "SELECT email FROM users WHERE username = :username"
+    result = connection.execute(sqlalchemy.text(query), {"username": username})
+    row = result.fetchone()
+    connection.close()
+    
+    return row[0] if row else None
+
+
+def get_activation_tokens(database_name: str = "postgres"):
+    """Get all valid activation tokens (for verification purposes)"""
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    query = "SELECT token FROM activation_tokens WHERE expires_at > NOW()"
+    result = connection.execute(sqlalchemy.text(query))
+    tokens = result.fetchall()
+    connection.close()
+    
+    return tokens
+
+
+def send_activation_email(email: str, activation_link: str):
+    """Send activation email to user"""
+    # Configure your SMTP settings
+    SMTP_SERVER = "smtp.gmail.com"  # Change to your SMTP server
+    SMTP_PORT = 587
+    SMTP_USERNAME = MY_EMAIL
+    SMTP_PASSWORD = MY_APP_PASSWORD
+
+    subject = "Activate Your Account"
+    
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+            }}
+            .container {{
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f9f9f9;
+            }}
+            .content {{
+                background-color: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }}
+            .button {{
+                display: inline-block;
+                padding: 12px 30px;
+                margin: 20px 0;
+                background-color: #667eea;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: bold;
+            }}
+            .footer {{
+                margin-top: 20px;
+                text-align: center;
+                color: #666;
+                font-size: 12px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="content">
+                <h2>Welcome! Please Activate Your Account</h2>
+                <p>Thank you for creating an account. To get started, please activate your account by clicking the button below:</p>
+                <a href="{activation_link}" class="button">Activate Account</a>
+                <p>Or copy and paste this link into your browser:</p>
+                <p style="word-break: break-all; color: #667eea;">{activation_link}</p>
+                <p>This link will expire in 24 hours.</p>
+                <p>If you didn't create this account, please ignore this email.</p>
+            </div>
+            <div class="footer">
+                <p>This is an automated email. Please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # For development, just print to console
+    print(f"\n{'='*60}")
+    print(f"ACTIVATION EMAIL for {email}")
+    print(f"{'='*60}")
+    print(f"Link: {activation_link}")
+    print(f"{'='*60}\n")
+    print(f"EMAIL USERNAME: {SMTP_USERNAME}")
+    print(f"EMAIL PASSWORD: {SMTP_PASSWORD}")
+    print(f"{'='*60}\n")
+    
+    # Uncomment below to actually send emails in production
+    
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = SMTP_USERNAME
+        msg['To'] = email
+        
+        html_part = MIMEText(html_body, 'html')
+        msg.attach(html_part)
+        
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"Activation email sent successfully to {email}")
+    except Exception as e:
+        print(f"Failed to send activation email: {str(e)}")
+
+
+# Update your add_new_user_to_db function to include is_active parameter
+# Example implementation:
+"""
+def add_new_user_to_db(username: str, email: str, password: str, database_name: str = "postgres", is_active: bool = False):
+    load_dotenv()
+    sqlalchemy_engine = sqlalchemy.create_engine(
+        f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}'
+    )
+    connection = sqlalchemy_engine.connect()
+    
+    # Hash password before storing
+    import hashlib
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    query = '''
+        INSERT INTO users (username, email, password_hash, is_active, created_at)
+        VALUES (:username, :email, :password_hash, :is_active, :created_at)
+    '''
+    connection.execute(
+        sqlalchemy.text(query),
+        {
+            "username": username,
+            "email": email,
+            "password_hash": password_hash,
+            "is_active": is_active,
+            "created_at": datetime.now()
+        }
+    )
+    connection.commit()
+    connection.close()
+"""
 
 def balance_teams(list_of_player_names: list, username: str):
     user_uuid = get_user_uuid(username, database_name="testing")[0]

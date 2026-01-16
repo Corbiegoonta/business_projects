@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string, session
-from pick_team import get_user_email_from_token, replace_user_password, get_password_reset_tokens, send_password_reset_email, put_password_reset_token_in_db, check_database_for_email, delete_user_account, add_new_user_to_db, check_if_email_is_valid, check_if_user_exists, check_if_username_is_valid, authenticate_user, check_if_password_is_valid, check_if_player_in_db, add_new_player_with_stats_to_db, get_user_uuid, get_player_pool_from_db, balance_teams
+from pick_team import get_active_activation_tokens_for_email, delete_old_activation_tokens, get_email_from_username, put_activation_token_in_db, send_activation_email, get_user_email_from_activation_token, activate_user_account, delete_activation_token, is_user_activated ,get_user_email_from_token, replace_user_password, get_password_reset_tokens, send_password_reset_email, put_password_reset_token_in_db, check_database_for_email, delete_user_account, add_new_user_to_db, check_if_email_is_valid, check_if_user_exists, check_if_username_is_valid, authenticate_user, check_if_password_is_valid, check_if_player_in_db, add_new_player_with_stats_to_db, get_user_uuid, get_player_pool_from_db, balance_teams
 import random
 import secrets
 import hashlib
@@ -46,10 +46,26 @@ def create_account():
         return jsonify({"error": username_check, "status": 400})
     if password_check is not True:
         return jsonify({"error": password_check, "status": 400})
-    
+
     if check_if_user_exists(email, username, database_name="testing") is True:
+        # Generate activation token
+        activation_token = secrets.token_urlsafe(32)
+        
+        # Add user to database with is_active=False
         add_new_user_to_db(username, email, password, database_name="testing")
-        return jsonify({"message": "Account Created Successfully", "status": 201})
+        
+        # Store activation token in database
+        user_uuid = get_user_uuid(email=email, database_name="testing")
+        put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
+        
+        # Send activation email
+        activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
+        send_activation_email(email, activation_link)
+        
+        return jsonify({
+            "message": "Account created! Please check your email to activate your account.",
+            "status": 201
+        })
     else:
         return jsonify({"error": "User with this email or username already exists.", "status": 400})
 
@@ -61,6 +77,14 @@ def login():
     
     resp, uname = authenticate_user(emailusername, password, database_name="testing")
     if resp is True:
+        # Check if account is activated
+        email = emailusername if '@' in emailusername else get_email_from_username(emailusername, database_name="testing")
+        if is_user_activated(email, database_name="testing") == 0:
+            return jsonify({
+                "error": "Please activate your account. Check your email for the activation link.",
+                "status": 403
+            })
+        
         response = jsonify({"message": "Login Successful", "status": 200})
         response.set_cookie("user", uname, max_age=60*60*24*7)  # 7 days
         return response
@@ -303,5 +327,281 @@ def submit_password_reset():
         'status': 200
     })
 
+# @app.route('/create_account', methods=['POST'])
+# def create_account():
+#     data = request.get_json()
+#     email = data.get('email', '')
+#     username = data.get('username', '')
+#     password = data.get('password', '')
+    
+#     email_check = check_if_email_is_valid(email)
+#     username_check = check_if_username_is_valid(username)
+#     password_check = check_if_password_is_valid(password)
+    
+#     if email_check is not True:
+#         return jsonify({"error": email_check, "status": 400})
+#     if username_check is not True:
+#         return jsonify({"error": username_check, "status": 400})
+#     if password_check is not True:
+#         return jsonify({"error": password_check, "status": 400})
+    
+#     if check_if_user_exists(email, username, database_name="testing") is True:
+#         # Generate activation token
+#         activation_token = secrets.token_urlsafe(32)
+        
+#         # Add user to database with is_active=False
+#         add_new_user_to_db(username, email, password, database_name="testing", is_active=False)
+        
+#         # Store activation token in database
+#         user_uuid = get_user_uuid(email=email, database_name="testing")
+#         put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
+        
+#         # Send activation email
+#         activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
+#         send_activation_email(email, activation_link)
+        
+#         return jsonify({
+#             "message": "Account created! Please check your email to activate your account.",
+#             "status": 201
+#         })
+#     else:
+#         return jsonify({"error": "User with this email or username already exists.", "status": 400})
+
+
+@app.route('/activate_account', methods=['GET'])
+def activate_account():
+    """Handle account activation via email link"""
+    token = request.args.get('token')
+    
+    if not token:
+        return render_template_string("""
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Invalid Activation Link</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    }
+                    .card {
+                        background: #fff;
+                        padding: 40px;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                        text-align: center;
+                        max-width: 400px;
+                    }
+                    h2 { color: #dc3545; margin-top: 0; }
+                    button {
+                        margin-top: 20px;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        border: none;
+                        background: #667eea;
+                        color: #fff;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 16px;
+                    }
+                    button:hover { background: #5568d3; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>❌ Invalid Activation Link</h2>
+                    <p>This activation link is invalid or missing.</p>
+                    <button onclick="location.href='/'">Return Home</button>
+                </div>
+            </body>
+            </html>
+        """)
+    
+    # Verify token and activate account
+    email = get_user_email_from_activation_token(token, database_name="testing")
+    
+    if not email:
+        return render_template_string("""
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Activation Failed</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    }
+                    .card {
+                        background: #fff;
+                        padding: 40px;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                        text-align: center;
+                        max-width: 400px;
+                    }
+                    h2 { color: #dc3545; margin-top: 0; }
+                    button {
+                        margin-top: 20px;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        border: none;
+                        background: #667eea;
+                        color: #fff;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 16px;
+                    }
+                    button:hover { background: #5568d3; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>❌ Activation Failed</h2>
+                    <p>This activation link is invalid or has already been used.</p>
+                    <button onclick="location.href='/'">Return Home</button>
+                </div>
+            </body>
+            </html>
+        """)
+    
+    # Activate the user account
+    activate_user_account(email, database_name="testing")
+    
+    # Delete the used activation token
+    delete_activation_token(token, database_name="testing")
+    
+    return render_template_string("""
+        <!doctype html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Account Activated</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', sans-serif;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                }
+                .card {
+                    background: #fff;
+                    padding: 40px;
+                    border-radius: 16px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    text-align: center;
+                    max-width: 400px;
+                }
+                h2 { color: #28a745; margin-top: 0; }
+                .checkmark {
+                    font-size: 64px;
+                    color: #28a745;
+                    margin-bottom: 20px;
+                }
+                button {
+                    margin-top: 20px;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    border: none;
+                    background: #28a745;
+                    color: #fff;
+                    cursor: pointer;
+                    font-weight: 600;
+                    font-size: 16px;
+                }
+                button:hover { background: #218838; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="checkmark">✓</div>
+                <h2>Account Activated!</h2>
+                <p>Your account has been successfully activated. You can now log in.</p>
+                <button onclick="location.href='/'">Go to Login</button>
+            </div>
+        </body>
+        </html>
+    """)
+
+
+@app.route('/resend_activation', methods=['POST'])
+def resend_activation():
+    """Resend activation email if user didn't receive it"""
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    
+    if not email:
+        return jsonify({'error': 'Email is required', 'status': 400}), 400
+    
+    # Check if user exists and is not already activated
+    # if get_active_activation_tokens_for_email(email, database_name="testing") != [] and is_user_activated(email, database_name="testing") is False:
+    #     return jsonify({
+    #         'message': 'If an unactivated account exists with this email, an activation link has been sent.',
+    #         'status': 200
+    #     })
+    
+    # Check if account is already activated
+    if is_user_activated(email, database_name="testing") == 1:
+        return jsonify({
+            'message': 'This account is already activated. Please log in.',
+            'status': 200
+        })
+    
+    # Generate new activation token
+    activation_token = secrets.token_urlsafe(32)
+    user_uuid = get_user_uuid(email=email, database_name="testing")
+    
+    # Delete old token and create new one
+    delete_old_activation_tokens(email, database_name="testing")
+    put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
+    
+    # Send activation email
+    activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
+    send_activation_email(email, activation_link)
+    
+    return jsonify({
+        'message': 'If an unactivated account exists with this email, an activation link has been sent.',
+        'status': 200
+    })
+
+
+
+# Update the login route to check if account is activated
+# @app.route('/login', methods=['POST'])
+# def login():
+#     data = request.get_json()
+#     emailusername = data.get('emailusername', '')
+#     password = data.get('password', '')
+    
+#     resp, uname = authenticate_user(emailusername, password, database_name="testing")
+#     if resp is True:
+#         # Check if account is activated
+#         email = emailusername if '@' in emailusername else get_email_from_username(emailusername, database_name="testing")
+#         if not is_user_activated(email, database_name="testing"):
+#             return jsonify({
+#                 "error": "Please activate your account. Check your email for the activation link.",
+#                 "status": 403
+#             })
+        
+#         response = jsonify({"message": "Login Successful", "status": 200})
+#         response.set_cookie("user", uname, max_age=60*60*24*7)  # 7 days
+#         return response
+#     else:
+#         return jsonify({"error": "Invalid email/username or password.", "status": 400})
+    
 if __name__ == '__main__':
     app.run(debug=True)
