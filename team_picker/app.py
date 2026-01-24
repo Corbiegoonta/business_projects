@@ -1,10 +1,10 @@
-from flask import Flask, request, jsonify, render_template_string, session
-from pick_team import get_active_activation_tokens_for_email, delete_old_activation_tokens, get_email_from_username, put_activation_token_in_db, send_activation_email, get_user_email_from_activation_token, activate_user_account, delete_activation_token, is_user_activated ,get_user_email_from_token, replace_user_password, get_password_reset_tokens, send_password_reset_email, put_password_reset_token_in_db, check_database_for_email, delete_user_account, add_new_user_to_db, check_if_email_is_valid, check_if_user_exists, check_if_username_is_valid, authenticate_user, check_if_password_is_valid, check_if_player_in_db, add_new_player_with_stats_to_db, get_user_uuid, get_player_pool_from_db, balance_teams
+from flask import Flask, request, jsonify, render_template_string, session, make_response
+from pick_team import DBUtils, BackEndUtils, Players
 import random
 import secrets
 import hashlib
 from datetime import datetime, timedelta
-from website import NEW_HOME_HTML, PICK_TEAM_HTML, PICK_TEAM_HTML_LOGGED_IN, FORGOT_PASSWORD_HTML, RESET_PASSWORD_HTML
+from website import NEW_HOME_HTML, PICK_TEAM_HTML, PICK_TEAM_HTML_LOGGED_IN, FORGOT_PASSWORD_HTML, RESET_PASSWORD_HTML, INVALID_EXPIRED_RESET_TOKEN_HTML, INVALID_ACTIVATION_LINK_HTML, FAILED_ACCOUNT_ACTIVATION_HTML, ACCOUNT_ACTIVATED_HTML
 
 
 app = Flask(__name__)
@@ -16,7 +16,9 @@ app.secret_key = 'your-secret-key-here-change-in-production'  # Required for ses
 @app.route('/')
 def home():
     user = request.cookies.get('user', None)
-    return render_template_string(NEW_HOME_HTML, user=user)
+    response = make_response(render_template_string(NEW_HOME_HTML, user=user))
+    response.set_cookie('user_id', str(DBUtils.get_user_uuid(user, database_name="testing")), max_age=60*60*24*7)
+    return response
 
 @app.route('/pick_team_logged_in')
 def pick_team():
@@ -35,11 +37,11 @@ def create_account():
     email = data.get('email', '')
     username = data.get('username', '')
     password = data.get('password', '')
-    
-    email_check = check_if_email_is_valid(email)
-    username_check = check_if_username_is_valid(username)
-    password_check = check_if_password_is_valid(password)
-    
+
+    email_check = BackEndUtils.check_if_email_is_valid(email)
+    username_check = BackEndUtils.check_if_username_is_valid(username)
+    password_check = BackEndUtils.check_if_password_is_valid(password)
+
     if email_check is not True:
         return jsonify({"error": email_check, "status": 400})
     if username_check is not True:
@@ -47,21 +49,21 @@ def create_account():
     if password_check is not True:
         return jsonify({"error": password_check, "status": 400})
 
-    if check_if_user_exists(email, username, database_name="testing") is True:
+    if DBUtils.check_if_user_exists(email, username, database_name="testing") is True:
         # Generate activation token
         activation_token = secrets.token_urlsafe(32)
         
         # Add user to database with is_active=False
-        add_new_user_to_db(username, email, password, database_name="testing")
+        DBUtils.add_new_user_to_db(username, email, password, database_name="testing")
         
         # Store activation token in database
-        user_uuid = get_user_uuid(email=email, database_name="testing")
-        put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
-        
+        user_uuid = DBUtils.get_user_uuid(email=email, database_name="testing")
+        DBUtils.put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
+
         # Send activation email
         activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
-        send_activation_email(email, activation_link)
-        
+        DBUtils.send_activation_email(email, activation_link)
+
         return jsonify({
             "message": "Account created! Please check your email to activate your account.",
             "status": 201
@@ -72,19 +74,19 @@ def create_account():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    emailusername = data.get('emailusername', '')
-    password = data.get('password', '')
-    
-    resp, uname = authenticate_user(emailusername, password, database_name="testing")
+    emailusername = data.get('emailusername', 'No email/username')
+    password = data.get('password', 'No password')
+
+    resp, uname = BackEndUtils.authenticate_user(emailusername, password, database_name="testing")
     if resp is True:
         # Check if account is activated
-        email = emailusername if '@' in emailusername else get_email_from_username(emailusername, database_name="testing")
-        if is_user_activated(email, database_name="testing") == 0:
+        email = emailusername if '@' in emailusername else DBUtils.get_email_from_username(emailusername, database_name="testing")
+        print(f"Checking activation status for email: {email}")
+        if DBUtils.is_user_activated(email, database_name="testing") == 0:
             return jsonify({
                 "error": "Please activate your account. Check your email for the activation link.",
                 "status": 403
             })
-        
         response = jsonify({"message": "Login Successful", "status": 200})
         response.set_cookie("user", uname, max_age=60*60*24*7)  # 7 days
         return response
@@ -109,12 +111,12 @@ def add_player():
     created_by = request.cookies.get("user")
     if not created_by:
         return jsonify({"error": "Must be logged in to add players", "status": 401})
-    
-    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
-    player_check = check_if_player_in_db(player_name, database_name="testing")
-    
+
+    user_uuid = DBUtils.get_user_uuid(created_by, database_name="testing")[0]
+    player_check = DBUtils.check_if_player_in_db(player_name, database_name="testing")
+
     if player_check is True:
-        add_new_player_with_stats_to_db(
+        DBUtils.add_new_player_with_stats_to_db(
             created_by=user_uuid, 
             player_name=player_name, 
             number_of_games=number_of_games, 
@@ -133,10 +135,10 @@ def get_players():
     print("User UUID from cookie:", created_by)
     # if not created_by:
     #     return jsonify({"error": "Must be logged in to add players", "status": 401})
-    
-    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
+
+    user_uuid = DBUtils.get_user_uuid(created_by, database_name="testing")
     # Mock data - replace with actual database query
-    players = get_player_pool_from_db(number_of_players=10, user_id=user_uuid, database_name="testing")
+    players = DBUtils.get_player_pool_from_db(number_of_players=10, user_id=user_uuid, database_name="testing")
 
     return jsonify({"players": players})
 
@@ -147,10 +149,10 @@ def autoselect():
     created_by = request.cookies.get("user")
     # if not created_by:
     #     return jsonify({"error": "Must be logged in to add players", "status": 401})
-    
-    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
+
+    user_uuid = DBUtils.get_user_uuid(created_by, database_name="testing")[0]
     # Mock data - replace with actual database query
-    players = get_player_pool_from_db(number_of_players=n, user_id=user_uuid, database_name="testing")
+    players = DBUtils.get_player_pool_from_db(number_of_players=n, user_id=user_uuid, database_name="testing")
     print(players)
     # Mock implementation - replace with actual logic
     # This should fetch players and select them based on some algorithm
@@ -173,7 +175,7 @@ def balance_the_teams():
         for player in teamA + teamB:
             player_names.append(player['name'])
         print("Balancing teams:", player_names)
-        teams = balance_teams(player_names, created_by)
+        teams = BackEndUtils.balance_teams(player_names, created_by)
     # Implement your balancing logic here
     # return jsonify({"message": "Teams balanced successfully"})
         return jsonify({"teamA": teams[0], "teamB": teams[1]})
@@ -184,8 +186,8 @@ def delete_account():
     if not created_by:
         return jsonify({"error": "Must be logged in to delete account", "status": 401})
 
-    user_uuid = get_user_uuid(created_by, database_name="testing")[0]
-    delete_user_account(user_uuid, database_name="testing")
+    user_uuid = DBUtils.get_user_uuid(created_by, database_name="testing")[0]
+    DBUtils.delete_user_account(user_uuid, database_name="testing")
     response = jsonify({"message": "Account deleted successfully"})
     response.set_cookie("user", "", expires=0)
     return response
@@ -204,12 +206,12 @@ def request_password_reset():
     if not email:
         return jsonify({'error': 'Email is required', 'status': 400}), 400
     else:
-        if check_database_for_email(email, database_name="testing"):
+        if DBUtils.check_database_for_email(email, database_name="testing"):
             token = secrets.token_urlsafe(32)
-            put_password_reset_token_in_db(get_user_uuid(email=email, database_name="testing"), email, token, database_name="testing")
+            DBUtils.put_password_reset_token_in_db(DBUtils.get_user_uuid(email=email, database_name="testing"), email, token, database_name="testing")
             reset_link = f"http://localhost:5000/reset_password?token={token}"
             print(f"Password reset link for {email}: {reset_link}")
-            send_password_reset_email(email, reset_link)
+            BackEndUtils.send_password_reset_email(email, reset_link)
         return jsonify({
         'message': 'If an account exists with this email, a password reset link has been sent.',
         'status': 200, 
@@ -245,56 +247,10 @@ def reset_password_page():
     print(f"Received token: {token}")
     # data = request.get_json()
     # email = data.get('email', '').strip().lower()
-    valid_tokens = get_password_reset_tokens(database_name="testing")
-    valid_tokens = [row[0] for row in valid_tokens]
+    valid_tokens = DBUtils.get_password_reset_tokens(database_name="testing")
     print(f"Valid tokens from DB: {valid_tokens}")
     if not token or token not in valid_tokens:
-        return render_template_string("""
-            <!doctype html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>Invalid Token</title>
-                <style>
-                    body {
-                        font-family: 'Segoe UI', sans-serif;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 100vh;
-                        margin: 0;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    }
-                    .card {
-                        background: #fff;
-                        padding: 40px;
-                        border-radius: 16px;
-                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-                        text-align: center;
-                        max-width: 400px;
-                    }
-                    h2 { color: #dc3545; }
-                    button {
-                        margin-top: 20px;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        border: none;
-                        background: #667eea;
-                        color: #fff;
-                        cursor: pointer;
-                        font-weight: 600;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="card">
-                    <h2>❌ Invalid or Expired Token</h2>
-                    <p>This password reset link is invalid or has expired.</p>
-                    <button onclick="location.href='/'">Return Home</button>
-                </div>
-            </body>
-            </html>
-        """)
+        return render_template_string(INVALID_EXPIRED_RESET_TOKEN_HTML)
 
     print(f"Rendering reset password page for token: {token}")
     
@@ -307,15 +263,15 @@ def submit_password_reset():
     token = data.get('token')
     # token = request.args.get('token')
     print(f"Received token for password reset submission: {token}")
-    email = get_user_email_from_token(token, database_name="testing")
+    email = DBUtils.get_user_email_from_token(token, database_name="testing")
     print(f"Email associated with token: {email}")
     new_password = data.get('password')
-    password_is_valid = check_if_password_is_valid(new_password)
+    password_is_valid = BackEndUtils.check_if_password_is_valid(new_password)
     if password_is_valid is True:
         confirm_password = data.get('confirm_password')
         if not confirm_password or confirm_password != new_password:
             return jsonify({'error': 'Passwords do not match', 'status': 400}), 400
-        replace_user_password(email, confirm_password, database_name="testing")  
+        DBUtils.replace_user_password(email, confirm_password, database_name="testing")  
     else:
         return jsonify({'error': password_is_valid, 'status': 400}), 400
     
@@ -374,168 +330,21 @@ def activate_account():
     token = request.args.get('token')
     
     if not token:
-        return render_template_string("""
-            <!doctype html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>Invalid Activation Link</title>
-                <style>
-                    body {
-                        font-family: 'Segoe UI', sans-serif;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 100vh;
-                        margin: 0;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    }
-                    .card {
-                        background: #fff;
-                        padding: 40px;
-                        border-radius: 16px;
-                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-                        text-align: center;
-                        max-width: 400px;
-                    }
-                    h2 { color: #dc3545; margin-top: 0; }
-                    button {
-                        margin-top: 20px;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        border: none;
-                        background: #667eea;
-                        color: #fff;
-                        cursor: pointer;
-                        font-weight: 600;
-                        font-size: 16px;
-                    }
-                    button:hover { background: #5568d3; }
-                </style>
-            </head>
-            <body>
-                <div class="card">
-                    <h2>❌ Invalid Activation Link</h2>
-                    <p>This activation link is invalid or missing.</p>
-                    <button onclick="location.href='/'">Return Home</button>
-                </div>
-            </body>
-            </html>
-        """)
+        return render_template_string(INVALID_ACTIVATION_LINK_HTML)
     
     # Verify token and activate account
-    email = get_user_email_from_activation_token(token, database_name="testing")
+    email = DBUtils.get_user_email_from_activation_token(token, database_name="testing")
     
     if not email:
-        return render_template_string("""
-            <!doctype html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>Activation Failed</title>
-                <style>
-                    body {
-                        font-family: 'Segoe UI', sans-serif;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 100vh;
-                        margin: 0;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    }
-                    .card {
-                        background: #fff;
-                        padding: 40px;
-                        border-radius: 16px;
-                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-                        text-align: center;
-                        max-width: 400px;
-                    }
-                    h2 { color: #dc3545; margin-top: 0; }
-                    button {
-                        margin-top: 20px;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        border: none;
-                        background: #667eea;
-                        color: #fff;
-                        cursor: pointer;
-                        font-weight: 600;
-                        font-size: 16px;
-                    }
-                    button:hover { background: #5568d3; }
-                </style>
-            </head>
-            <body>
-                <div class="card">
-                    <h2>❌ Activation Failed</h2>
-                    <p>This activation link is invalid or has already been used.</p>
-                    <button onclick="location.href='/'">Return Home</button>
-                </div>
-            </body>
-            </html>
-        """)
+        return render_template_string(FAILED_ACCOUNT_ACTIVATION_HTML)
     
     # Activate the user account
-    activate_user_account(email, database_name="testing")
+    DBUtils.activate_user_account(email, database_name="testing")
     
     # Delete the used activation token
-    delete_activation_token(token, database_name="testing")
-    
-    return render_template_string("""
-        <!doctype html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Account Activated</title>
-            <style>
-                body {
-                    font-family: 'Segoe UI', sans-serif;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    min-height: 100vh;
-                    margin: 0;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                }
-                .card {
-                    background: #fff;
-                    padding: 40px;
-                    border-radius: 16px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-                    text-align: center;
-                    max-width: 400px;
-                }
-                h2 { color: #28a745; margin-top: 0; }
-                .checkmark {
-                    font-size: 64px;
-                    color: #28a745;
-                    margin-bottom: 20px;
-                }
-                button {
-                    margin-top: 20px;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    border: none;
-                    background: #28a745;
-                    color: #fff;
-                    cursor: pointer;
-                    font-weight: 600;
-                    font-size: 16px;
-                }
-                button:hover { background: #218838; }
-            </style>
-        </head>
-        <body>
-            <div class="card">
-                <div class="checkmark">✓</div>
-                <h2>Account Activated!</h2>
-                <p>Your account has been successfully activated. You can now log in.</p>
-                <button onclick="location.href='/'">Go to Login</button>
-            </div>
-        </body>
-        </html>
-    """)
+    DBUtils.delete_activation_token(token, database_name="testing")
+
+    return render_template_string(ACCOUNT_ACTIVATED_HTML)
 
 
 @app.route('/resend_activation', methods=['POST'])
@@ -555,7 +364,7 @@ def resend_activation():
     #     })
     
     # Check if account is already activated
-    if is_user_activated(email, database_name="testing") == 1:
+    if DBUtils.is_user_activated(email, database_name="testing") == 1:
         return jsonify({
             'message': 'This account is already activated. Please log in.',
             'status': 200
@@ -563,22 +372,47 @@ def resend_activation():
     
     # Generate new activation token
     activation_token = secrets.token_urlsafe(32)
-    user_uuid = get_user_uuid(email=email, database_name="testing")
+    user_uuid = DBUtils.get_user_uuid(email=email, database_name="testing")
     
     # Delete old token and create new one
-    delete_old_activation_tokens(email, database_name="testing")
-    put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
-    
+    DBUtils.delete_old_activation_tokens(email, database_name="testing")
+    DBUtils.put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
+
     # Send activation email
     activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
-    send_activation_email(email, activation_link)
-    
+    BackEndUtils.send_activation_email(email, activation_link)
+
     return jsonify({
         'message': 'If an unactivated account exists with this email, an activation link has been sent.',
         'status': 200
     })
 
+@app.route('/submit_feedback', methods=['POST'])
+def submit_feedback():
+    data = request.get_json()
+    email = data.get('email', '')
+    feedback_text = data.get('message', '')
 
+    # Here you would typically store the feedback in a database or send it via email
+    print(f"Feedback received from {email}: {feedback_text}")
+    DBUtils.store_user_feedback_in_db(email=email, feedback=feedback_text, database_name="testing")
+    BackEndUtils.send_feedback_email_notification(feedback_text, user_uuid=DBUtils.get_user_uuid(email=email, database_name="testing"))
+
+    return jsonify({"message": "Thank you for your feedback!", "status": 200})
+
+@app.route('/contact_us', methods=['POST'])
+def contact_us():
+    data = request.get_json()
+    email = data.get('email', '')
+    message = data.get('description', '')
+
+    # Here you would typically store the message in a database or send it via email
+    print(f"Contact message received from {email}: {message}")
+    ticket_id = DBUtils.store_contact_us_message(email=email, message=message, database_name="testing")
+    BackEndUtils.send_contact_us_email_notification(message, user_uuid=DBUtils.get_user_uuid(email=email, database_name="testing"), email=email)
+    BackEndUtils.send_contact_us_email_acknowledgement(message, email=email)
+    print("yes")
+    return jsonify({"message": "Thank you for contacting us! We will get back to you shortly.", "status": 200, "ticket_id": ticket_id})
 
 # Update the login route to check if account is activated
 # @app.route('/login', methods=['POST'])

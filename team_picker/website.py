@@ -17,6 +17,47 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+.container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+.button-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.action-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+.feedback-btn {
+            background-color: yellow;
+            color: white;
+        }
+
+.feedback-btn:hover {
+    background-color: darkorange;
+    transform: translateY(-2px);
+}
+
+.support-btn {
+    background-color: #48bb78;
+    color: white;
+}
+
+.support-btn:hover {
+    background-color: #38a169;
+    transform: translateY(-2px);
+}
+       
 /* Top right login area */
 .top-right {
     position: fixed;
@@ -74,7 +115,7 @@ button {
     background: #667eea;
     color: #fff;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     transition: all 0.3s ease;
 }
@@ -186,11 +227,16 @@ button:hover {
     background: #fff;
     width: 90%;
     max-width: 380px;
-    margin: 10% auto;
+    margin: 5% auto; /* Reduced from 10% to start higher on the screen */
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     text-align: center;
+    
+    /* --- NEW LINES TO FIX THE BUG --- */
+    max-height: 90vh; /* Limits height to 90% of the screen height */
+    overflow-y: auto; /* Adds a scrollbar inside the modal if content is too long */
+    position: relative; /* Ensures proper stacking */
 }
 .modal-content h3 {
     margin-top: 0;
@@ -216,9 +262,122 @@ button:hover {
     opacity: 0.8;
     text-decoration: underline !important;
 }
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.modal-header h2 {
+    color: #333;
+    font-size: 24px;
+}
 .button-group {
     margin-top: 20px;
 }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+    background-color: #5568d3;
+}
+
+.submit-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.success-message,
+.error-message {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.success-message {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.success-message.show,
+.error-message.show {
+    display: block;
+}
+
+.required {
+    color: red;
+}
+
 </style>
 </head>
 <body>
@@ -236,15 +395,13 @@ button:hover {
 <div class="card">
     <button class="help-btn" onclick="openTutorial()" title="Help">?</button>
 
-    <h2>⚽ Team Picker</h2>
+    <h1>⚽ Team Picker</h1>
     <div>
+        <button onclick="location.href='/pick_team_logged_in'">Pick Team</button>
         <button onclick="openCreate()">Create Account</button>
-        {% if user and user != "Guest" %}
-            <button onclick="location.href='/pick_team_logged_in'">Pick Team</button>
-            <button onclick="deleteAccount()">Delete Account</button>
-        {% else %}
-            <button onclick="location.href='/pick_team_not_logged_in'">Pick Team</button>
-        {% endif %}
+        <button onclick="deleteAccount()">Delete Account</button>
+        <button class="action-button feedback-btn" onclick="openFeedbackModal()">📝 Give Feedback</button>
+        <button class="action-button support-btn" onclick="openSupportModal()">🆘 Get Help / Contact Us</button>
     </div>
 </div>
 
@@ -317,6 +474,107 @@ button:hover {
     </div>
 </div>
 
+<!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Give Feedback</h2>
+                <button class="close-btn" onclick="closeFeedbackModal()">&times;</button>
+            </div>
+            
+            <div id="feedbackSuccess" class="success-message"></div>
+            <div id="feedbackError" class="error-message"></div>
+            
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="feedbackEmail" required placeholder="your.email@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Feedback Type <span class="required">*</span></label>
+                    <select id="feedbackType" required>
+                        <option value="">Select type...</option>
+                        <option value="feature_request">Feature Request</option>
+                        <option value="bug_report">Bug Report</option>
+                        <option value="general">General Feedback</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Subject <span class="required">*</span></label>
+                    <input type="text" id="feedbackSubject" required placeholder="Brief summary">
+                </div>
+                
+                <div class="form-group">
+                    <label>Message <span class="required">*</span></label>
+                    <textarea id="feedbackMessage" required placeholder="Tell us more about your feedback..."></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="feedbackSubmitBtn">Submit Feedback</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Support Modal -->
+    <div id="supportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Get Help / Contact Us</h2>
+                <button class="close-btn" onclick="closeSupportModal()">&times;</button>
+            </div>
+            
+            <div id="supportSuccess" class="success-message"></div>
+            <div id="supportError" class="error-message"></div>
+            
+            <form id="supportForm">
+                <div class="form-group">
+                    <label>Username <span class="required">*</span></label>
+                    <input type="text" id="supportUsername" required placeholder="Your username">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="supportEmail" required placeholder="your.email@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Issue Type <span class="required">*</span></label>
+                    <select id="supportIssueType" required>
+                        <option value="">Select issue type...</option>
+                        <option value="technical">Technical Issue</option>
+                        <option value="account">Account Issue</option>
+                        <option value="billing">Billing Question</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Priority <span class="required">*</span></label>
+                    <select id="supportPriority" required>
+                        <option value="low">Low - General inquiry</option>
+                        <option value="medium" selected>Medium - Normal issue</option>
+                        <option value="high">High - Significant problem</option>
+                        <option value="urgent">Urgent - Critical issue</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Subject <span class="required">*</span></label>
+                    <input type="text" id="supportSubject" required placeholder="Brief description of the issue">
+                </div>
+                
+                <div class="form-group">
+                    <label>Description <span class="required">*</span></label>
+                    <textarea id="supportDescription" required placeholder="Please describe your issue in detail..."></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="supportSubmitBtn">Submit Support Ticket</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function openCreate(){ document.getElementById('createModal').style.display='block' }
 function closeCreate(){ document.getElementById('createModal').style.display='none' }
@@ -344,6 +602,7 @@ function deleteAccount(){
         });
     }
 }
+
 function openTutorial() {
     document.getElementById('tutorialModal').style.display = 'block';
 }
@@ -395,7 +654,7 @@ async function submitLogin(){
         body:JSON.stringify({emailusername,password})
     });
     const data = await resp.json();
-    if (data.status == 400) { 
+    if (data.status == 400 || data.status == 403) { 
         alert(data.error); 
         return; 
     }
@@ -416,6 +675,157 @@ window.onclick = function(event) {
         event.target.style.display = 'none';
     }
 }
+
+function openFeedbackModal() {
+    document.getElementById('feedbackModal').style.display = 'block';
+}
+
+function closeFeedbackModal() {
+    document.getElementById('feedbackModal').style.display = 'none';
+    document.getElementById('feedbackForm').reset();
+    hideMessages('feedback');
+}
+
+function openSupportModal() {
+    document.getElementById('supportModal').style.display = 'block';
+}
+
+function closeSupportModal() {
+    document.getElementById('supportModal').style.display = 'none';
+    document.getElementById('supportForm').reset();
+    hideMessages('support');
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const feedbackModal = document.getElementById('feedbackModal');
+    const supportModal = document.getElementById('supportModal');
+    
+    if (event.target === feedbackModal) {
+        closeFeedbackModal();
+    }
+    if (event.target === supportModal) {
+        closeSupportModal();
+    }
+}
+
+// Message display functions
+function showSuccess(type, message) {
+    const element = document.getElementById(`${type}Success`);
+    element.textContent = message;
+    element.classList.add('show');
+    setTimeout(() => {
+        element.classList.remove('show');
+    }, 5000);
+}
+
+function showError(type, message) {
+    const element = document.getElementById(`${type}Error`);
+    element.textContent = message;
+    element.classList.add('show');
+    setTimeout(() => {
+        element.classList.remove('show');
+    }, 5000);
+}
+
+function hideMessages(type) {
+    document.getElementById(`${type}Success`).classList.remove('show');
+    document.getElementById(`${type}Error`).classList.remove('show');
+}
+
+// Feedback form submission
+document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('feedbackSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    
+    const formData = {
+        user_id: 'YOUR_USER_ID', // Replace with actual user ID from session/auth
+        email: document.getElementById('feedbackEmail').value,
+        feedback_type: document.getElementById('feedbackType').value,
+        subject: document.getElementById('feedbackSubject').value,
+        message: document.getElementById('feedbackMessage').value
+    };
+    
+    try {
+        const response = await fetch('/submit_feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showSuccess('feedback', 'Thank you for your feedback! We appreciate your input.');
+            document.getElementById('feedbackForm').reset();
+            setTimeout(() => {
+                closeFeedbackModal();
+            }, 2000);
+        } else {
+            showError('feedback', result.error || 'Failed to submit feedback. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('feedback', 'An error occurred. Please try again later.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Feedback';
+    }
+});
+
+// Support form submission
+        document.getElementById('supportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('supportSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            const formData = {
+                user_id: 'YOUR_USER_ID', // Replace with actual user ID from session/auth
+                username: document.getElementById('supportUsername').value,
+                email: document.getElementById('supportEmail').value,
+                issue_type: document.getElementById('supportIssueType').value,
+                priority: document.getElementById('supportPriority').value,
+                subject: document.getElementById('supportSubject').value,
+                description: document.getElementById('supportDescription').value
+            };
+            
+            try {
+                const response = await fetch('contact_us', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showSuccess('support', `Support ticket created! Ticket ID: ${result.ticket_id.substring(0, 8)}... We'll get back to you soon.`);
+                    document.getElementById('supportForm').reset();
+                    setTimeout(() => {
+                        closeSupportModal();
+                    }, 3000);
+                } else {
+                    showError('support', result.error || 'Failed to create support ticket. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message)
+                showError('support', error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Support Ticket';
+            }
+        });
+
 </script>
 </body>
 </html>
@@ -589,9 +999,9 @@ button.secondary:hover {
 }
 .modal {
     display: none;
-    position: fixed;
+    position: relative;
     left: 0;
-    top: 0;
+    top: 0px;
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.5);
@@ -608,6 +1018,7 @@ button.secondary:hover {
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     text-align: center;
 }
+
 .modal-content h3 {
     margin-top: 0;
     color: #333;
@@ -2105,3 +2516,202 @@ document.getElementById('confirmPasswordInput').addEventListener('keypress', fun
 </body>
 </html>
 """
+INVALID_EXPIRED_RESET_TOKEN_HTML = """
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Invalid Token</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    }
+                    .card {
+                        background: #fff;
+                        padding: 40px;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                        text-align: center;
+                        max-width: 400px;
+                    }
+                    h2 { color: #dc3545; }
+                    button {
+                        margin-top: 20px;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        border: none;
+                        background: #667eea;
+                        color: #fff;
+                        cursor: pointer;
+                        font-weight: 600;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>❌ Invalid or Expired Token</h2>
+                    <p>This password reset link is invalid or has expired.</p>
+                    <button onclick="location.href='/'">Return Home</button>
+                </div>
+            </body>
+            </html>
+        """
+
+INVALID_ACTIVATION_LINK_HTML = """
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Invalid Activation Link</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    }
+                    .card {
+                        background: #fff;
+                        padding: 40px;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                        text-align: center;
+                        max-width: 400px;
+                    }
+                    h2 { color: #dc3545; margin-top: 0; }
+                    button {
+                        margin-top: 20px;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        border: none;
+                        background: #667eea;
+                        color: #fff;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 16px;
+                    }
+                    button:hover { background: #5568d3; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>❌ Invalid Activation Link</h2>
+                    <p>This activation link is invalid or missing.</p>
+                    <button onclick="location.href='/'">Return Home</button>
+                </div>
+            </body>
+            </html>
+        """
+
+FAILED_ACCOUNT_ACTIVATION_HTML = """
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Activation Failed</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    }
+                    .card {
+                        background: #fff;
+                        padding: 40px;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                        text-align: center;
+                        max-width: 400px;
+                    }
+                    h2 { color: #dc3545; margin-top: 0; }
+                    button {
+                        margin-top: 20px;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        border: none;
+                        background: #667eea;
+                        color: #fff;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 16px;
+                    }
+                    button:hover { background: #5568d3; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>❌ Activation Failed</h2>
+                    <p>This activation link is invalid or has already been used.</p>
+                    <button onclick="location.href='/'">Return Home</button>
+                </div>
+            </body>
+            </html>
+        """
+
+ACCOUNT_ACTIVATED_HTML = """
+        <!doctype html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Account Activated</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', sans-serif;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                }
+                .card {
+                    background: #fff;
+                    padding: 40px;
+                    border-radius: 16px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    text-align: center;
+                    max-width: 400px;
+                }
+                h2 { color: #28a745; margin-top: 0; }
+                .checkmark {
+                    font-size: 64px;
+                    color: #28a745;
+                    margin-bottom: 20px;
+                }
+                button {
+                    margin-top: 20px;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    border: none;
+                    background: #28a745;
+                    color: #fff;
+                    cursor: pointer;
+                    font-weight: 600;
+                    font-size: 16px;
+                }
+                button:hover { background: #218838; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="checkmark">✓</div>
+                <h2>Account Activated!</h2>
+                <p>Your account has been successfully activated. You can now log in.</p>
+                <button onclick="location.href='/'">Go to Login</button>
+            </div>
+        </body>
+        </html>
+    """
