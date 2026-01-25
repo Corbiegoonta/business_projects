@@ -1,4 +1,4 @@
-from send_whatsapp.src import sender
+# from send_whatsapp.src import sender
 from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
@@ -474,22 +474,22 @@ if sqlalchemy_engine.dialect.has_table(connection, "contact_us"):
 else:
     Tables.create_contact_us_table(database_name="testing")
 
-class Whatsapp:
-    def __init__(self):
-        pass
+# class Whatsapp:
+#     def __init__(self):
+#         pass
 
-    def connect_to_whatsapp(message_to_send: str, type_of_contact: str, contact: str):
-        load_dotenv()
-        hour_time = datetime.datetime.now().hour
-        minute_time = datetime.datetime.now().minute
-        send_message = sender.WhatsAppMessageSender(
-            mode='contact',
-            phone_number=os.getenv('MY_PHONE_NUMBER'),
-            message=message_to_send, 
-            time_hour=hour_time,
-            time_minute=minute_time+1
-            )
-        send_message.execute()
+#     def connect_to_whatsapp(message_to_send: str, type_of_contact: str, contact: str):
+#         load_dotenv()
+#         hour_time = datetime.datetime.now().hour
+#         minute_time = datetime.datetime.now().minute
+#         send_message = sender.WhatsAppMessageSender(
+#             mode='contact',
+#             phone_number=os.getenv('MY_PHONE_NUMBER'),
+#             message=message_to_send, 
+#             time_hour=hour_time,
+#             time_minute=minute_time+1
+#             )
+#         send_message.execute()
         # print(hour_time)
         # print(minute_time)
 
