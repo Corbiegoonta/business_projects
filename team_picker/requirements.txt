@@ -3,6 +3,5 @@ pandas
 sqlalchemy
 flask
 bcrypt
-hashlib
 pywhatkit
 gunicorn
