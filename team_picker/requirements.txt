@@ -7,3 +7,4 @@ pywhatkit
 gunicorn
 python-dotenv
 python-dateutil
+psycopg2
