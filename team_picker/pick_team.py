@@ -666,8 +666,8 @@ class DBUtils:
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query))
             if result.fetchone() != None:
-                print(result.fetchone().tuple())
-                print(type(result.fetchone().tuple()))
+                # print(result.fetchone().tuple())
+                # print(type(result.fetchone().tuple()))
                 return result.fetchone()
             else:
                 return f"Username {username} or email {email} does not exist."
