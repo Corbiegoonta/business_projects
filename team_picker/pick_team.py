@@ -658,13 +658,15 @@ class DBUtils:
     def get_user_uuid(username: str="", email: str="", database_name: str="postgres")-> uuid.UUID:
         """Retrieve the user_id for a given username or email from the users table in the specified database."""
         connection = sqlalchemy_engine.connect()
+        print(username)
+        print(email)
         query = f"SELECT user_id FROM users WHERE username = '{username}' OR email = '{email}';"
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query))
-            print(result.fetchone()[0])
-            print(type(result.fetchone()[0]))
+            print(result.fetchone())
+            print(type(result.fetchone()))
             if result.fetchone() != None:
-                return result.fetchone()[0]
+                return result.fetchone()
             else:
                 return f"Username {username} or email {email} does not exist."
             
