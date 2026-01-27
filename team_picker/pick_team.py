@@ -661,8 +661,8 @@ class DBUtils:
         query = f"SELECT user_id FROM users WHERE username = '{username}' OR email = '{email}';"
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query))
-            print(result.fetchone())
-            print(type(result.fetchone()))
+            print(result.fetchone()[0])
+            print(type(result.fetchone()[0]))
             if result.fetchone() != None:
                 return result.fetchone()[0]
             else:
