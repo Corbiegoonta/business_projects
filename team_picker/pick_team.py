@@ -659,9 +659,9 @@ class DBUtils:
         connection = sqlalchemy_engine.connect()
         query = f"SELECT user_id FROM users WHERE username = '{username}' OR email = '{email}';"
         with connection as conn:
-            result = conn.execute(sqlalchemy.text(query))
+            result = conn.execute(sqlalchemy.text(query)).fetchone()[0]
             if result != None:
-                return result.fetchone()[0]
+                return result
             else:
                 return f"Username {username} or email {email} does not exist."
             
