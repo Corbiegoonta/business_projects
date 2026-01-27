@@ -197,6 +197,7 @@ class Tables:
                 sqlalchemy.Column('username', sqlalchemy.String),
                 sqlalchemy.Column('email', sqlalchemy.String),
                 sqlalchemy.Column('password_hash', sqlalchemy.String),
+                sqlalchemy.Column('is_active', sqlalchemy.Integer, default=0),
                 sqlalchemy.Column('created_by', sqlalchemy.UUID, foreign_key=True),
                 sqlalchemy.Column('updated_by', sqlalchemy.UUID, foreign_key=True),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
