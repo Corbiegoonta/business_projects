@@ -28,7 +28,8 @@ load_dotenv()
 MY_EMAIL = os.getenv('MY_EMAIL')
 MY_APP_PASSWORD = os.getenv('MY_APP_PASSWORD')
 
-sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/testing')
+# sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/testing')
+sqlalchemy_engine = sqlalchemy.create_engine('postgresql://testing_70hf_user:RhDNPOBOz0Lo8UlSiRIIYFE7Dt6yfv1Z@dpg-d5rluacoud1c73eo14c0-a/testing_70hf')
 
 connection = sqlalchemy_engine.connect()
 session = Session(sqlalchemy_engine)
