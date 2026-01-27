@@ -662,7 +662,7 @@ class DBUtils:
         print(username)
         print("email:")
         print(email)
-        query = f"SELECT user_id FROM users WHERE username = '{username}' OR email = '{email}';"
+        query = f"SELECT user_id FROM users WHERE email = '{email}';"
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query))
             if result.fetchone() != None:
