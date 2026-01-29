@@ -50,7 +50,7 @@ def create_account():
     if password_check is not True:
         return jsonify({"error": password_check, "status": 400})
 
-    if DBUtils.check_if_user_exists(email, username, database_name="testing") is True:
+    if DBUtils.check_if_user_exists(email, username) is True:
         try:
             # Generate activation token
             activation_token = secrets.token_urlsafe(32)
