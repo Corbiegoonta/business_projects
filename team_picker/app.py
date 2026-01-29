@@ -56,11 +56,11 @@ def create_account():
             activation_token = secrets.token_urlsafe(32)
             
             # Add user to database with is_active=False
-            DBUtils.add_new_user_to_db(username, email, password, database_name="testing")
+            DBUtils.add_new_user_to_db(username, email, password)
             
             # Store activation token in database
-            user_uuid = DBUtils.get_user_uuid(email=email, database_name="testing")
-            DBUtils.put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
+            # user_uuid = DBUtils.get_user_uuid(email=email, database_name="testing")
+            DBUtils.put_activation_token_in_db(email, activation_token)
 
             # Send activation email
             activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
