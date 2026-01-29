@@ -1,4 +1,5 @@
 # from send_whatsapp.src import sender
+import email
 from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
@@ -51,8 +52,7 @@ class Players(Base):
 
 class Users(Base):
     __tablename__ = 'users'
-    user_id = Column(Integer, primary_key=True)
-    username = Column(String)
+    username = Column(String, primary_key=True)
     email = Column(String)
     hashed_password = Column(String)  
 
@@ -66,15 +66,13 @@ class Matches(Base):
 class PasswordResets(Base):
     __tablename__ = 'password_resets'
     reset_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, foreign_key=True)
-    email = Column(String)
+    email = Column(String, foreign_key=True)
     reset_token = Column(String)
     token_expiry = Column(DateTime)
 
 class ActivationTokens(Base):
     __tablename__ = 'activation_tokens'
-    user_id = Column(Integer, foreign_key=True)
-    email = Column(String)
+    email = Column(String, foreign_key=True)
     token = Column(String, primary_key=True)
     expires_at = Column(DateTime)
     created_at = Column(DateTime)
@@ -82,7 +80,7 @@ class ActivationTokens(Base):
 class Feedback(Base):
     __tablename__ = 'feedback'
     feedback_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, foreign_key=True)
+    email = Column(String, foreign_key=True)
     feedback_text = Column(String)
     text_length = Column(Integer)
     created_datetime = Column(DateTime)
@@ -91,8 +89,7 @@ class Feedback(Base):
 class ContactUs(Base):
     __tablename__ = 'contact_us'
     contact_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, foreign_key=True)
-    email = Column(String)
+    email = Column(String, foreign_key=True)
     message = Column(String)
     text_length = Column(Integer)
     created_datetime = Column(DateTime)
@@ -116,8 +113,8 @@ class Tables:
         - location (String)
         - referee (String)
         - outcome (String)
-        - created_by (UUID, foreign key)
-        - updated_by (UUID, foreign key)
+        - created_by (String, foreign key)
+        - updated_by (String, foreign key)
         - created_datetime (DateTime, default current timestamp)
         - updated_datetime (DateTime, default current timestamp, on update current timestamp)
         """
@@ -134,8 +131,8 @@ class Tables:
                 sqlalchemy.Column('location', sqlalchemy.String),
                 sqlalchemy.Column('referee', sqlalchemy.String),
                 sqlalchemy.Column('outcome', sqlalchemy.String),
-                sqlalchemy.Column('created_by', sqlalchemy.UUID, foreign_key=True),
-                sqlalchemy.Column('updated_by', sqlalchemy.UUID, foreign_key=True),
+                sqlalchemy.Column('created_by', sqlalchemy.String, foreign_key=True),
+                sqlalchemy.Column('updated_by', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
                 sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
             )
@@ -155,8 +152,8 @@ class Tables:
         - win_rate (Float, computed as ROUND(CAST(wins AS NUMERIC) / NULLIF(number_of_games, 0), 3))
         - points_win_rate (Float, computed as ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games * 3, 0), 3))
         - points_per_game (Float, computed as ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games, 0), 3))
-        - created_by (UUID, foreign key)
-        - updated_by (UUID, foreign key)
+        - created_by (String, foreign key)
+        - updated_by (String, foreign key)
         - created_datetime (DateTime, default current timestamp)
         - updated_datetime (DateTime, default current timestamp, on update current timestamp)
         """
@@ -172,8 +169,8 @@ class Tables:
                 sqlalchemy.Column('win_rate', sqlalchemy.Float, Computed("ROUND(CAST(wins AS NUMERIC) / NULLIF(number_of_games, 0), 3)", persisted=True)),
                 sqlalchemy.Column('points_win_rate', sqlalchemy.Float, Computed("ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games * 3, 0), 3)", persisted=True)),
                 sqlalchemy.Column('points_per_game', sqlalchemy.Float, Computed("ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games, 0), 3)", persisted=True)),
-                sqlalchemy.Column('created_by', sqlalchemy.UUID, foreign_key=True),
-                sqlalchemy.Column('updated_by', sqlalchemy.UUID, foreign_key=True),
+                sqlalchemy.Column('created_by', sqlalchemy.String, foreign_key=True),
+                sqlalchemy.Column('updated_by', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
                 sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
             )
@@ -183,23 +180,20 @@ class Tables:
 
     def create_users_table(database_name: str="postgres"):
         """Create the users table in the specified database if it doesn't exist. The following columns are included:
-        - user_id (UUID, primary key)
         - username (String)
-        - email (String)
+        - email (String, primary key)
         - password_hash (String)
-        - created_by (UUID, foreign key)
-        - updated_by (UUID, foreign key)
+        - is_active (Integer, default 0)
+        - created_by (String, foreign key)
+        - updated_by (String, foreign key)
         - created_datetime (DateTime, default current timestamp)
         - updated_datetime (DateTime, default current timestamp, on update current timestamp)"""
         if not sqlalchemy_engine.dialect.has_table(connection, "users"):
             sqlalchemy.Table("users", metadata,
-                sqlalchemy.Column('user_id', sqlalchemy.UUID, primary_key=True),
                 sqlalchemy.Column('username', sqlalchemy.String),
-                sqlalchemy.Column('email', sqlalchemy.String),
+                sqlalchemy.Column('email', sqlalchemy.String, primary_key=True),
                 sqlalchemy.Column('password_hash', sqlalchemy.String),
                 sqlalchemy.Column('is_active', sqlalchemy.Integer, default=0),
-                sqlalchemy.Column('created_by', sqlalchemy.UUID, foreign_key=True),
-                sqlalchemy.Column('updated_by', sqlalchemy.UUID, foreign_key=True),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
                 sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
             )
@@ -215,8 +209,8 @@ class Tables:
         - team (String)
         - team_outcome (String)
         - match_datetime (DateTime, default current timestamp)
-        - created_by (UUID, foreign key)
-        - updated_by (UUID, foreign key)
+        - created_by (String, foreign key)
+        - updated_by (String, foreign key)
         - created_datetime (DateTime, default current timestamp)
         - updated_datetime (DateTime, default current timestamp, on update current timestamp)
         """
@@ -228,8 +222,8 @@ class Tables:
                 sqlalchemy.Column('team', sqlalchemy.String),
                 sqlalchemy.Column('team_outcome', sqlalchemy.String),
                 sqlalchemy.Column('match_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
-                sqlalchemy.Column('created_by', sqlalchemy.UUID, foreign_key=True),
-                sqlalchemy.Column('updated_by', sqlalchemy.UUID, foreign_key=True),
+                sqlalchemy.Column('created_by', sqlalchemy.String, foreign_key=True),
+                sqlalchemy.Column('updated_by', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
                 sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
             )
@@ -240,8 +234,7 @@ class Tables:
     def create_password_resets_table(database_name: str="postgres"):
         """Create the password_resets table in the specified database if it doesn't exist. The following columns are included:
         - reset_id (UUID, primary key)
-        - user_id (UUID, foreign key)
-        - email (String)
+        - email (String, foreign key)
         - reset_token (String)
         - token_expiry (DateTime)
         - created_datetime (DateTime, default current timestamp)
@@ -250,8 +243,7 @@ class Tables:
         if not sqlalchemy_engine.dialect.has_table(connection, "password_resets"):
             sqlalchemy.Table("password_resets", metadata,
                 sqlalchemy.Column('reset_id', sqlalchemy.UUID, primary_key=True),
-                sqlalchemy.Column('user_id', sqlalchemy.UUID, foreign_key=True),
-                sqlalchemy.Column('email', sqlalchemy.String),
+                sqlalchemy.Column('email', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('reset_token', sqlalchemy.String),
                 sqlalchemy.Column('token_expiry', sqlalchemy.DateTime),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
@@ -263,17 +255,17 @@ class Tables:
 
     def create_activation_tokens_table(database_name: str="postgres"):
         """Create the activation_tokens table in the specified database if it doesn't exist. The following columns are included:
-        - user_id (UUID, foreign key)
-        - email (String)
-        - token (String, primary key)
+        - activation_id (UUID, primary key)
+        - email (String, foreign key)
+        - token (String)
         - expires_at (DateTime)
         - created_at (DateTime, default current timestamp)
         """
         if not sqlalchemy_engine.dialect.has_table(connection, "activation_tokens"):
             sqlalchemy.Table("activation_tokens", metadata,
-                sqlalchemy.Column('user_id', sqlalchemy.UUID, foreign_key=True),
-                sqlalchemy.Column('email', sqlalchemy.String),
-                sqlalchemy.Column('token', sqlalchemy.String, primary_key=True),
+                sqlalchemy.Column('activation_id', sqlalchemy.UUID, primary_key=True),
+                sqlalchemy.Column('email', sqlalchemy.String, foreign_key=True),
+                sqlalchemy.Column('token', sqlalchemy.String),
                 sqlalchemy.Column('expires_at', sqlalchemy.DateTime),
                 sqlalchemy.Column('created_at', sqlalchemy.DateTime, default=datetime.datetime.now())
             )
@@ -284,7 +276,7 @@ class Tables:
     def create_feedback_table(database_name: str="postgres"):
         """Create the feedback table in the specified database if it doesn't exist. The following columns are included:
         - feedback_id (Integer, primary key)
-        - user_id (Integer, foreign key)
+        - email (String, foreign key)
         - feedback_text (String)
         - text_length (Integer, computed)
         - created_datetime (DateTime)
@@ -293,7 +285,7 @@ class Tables:
         if not sqlalchemy_engine.dialect.has_table(connection, "feedback"):
             sqlalchemy.Table("feedback", metadata,
                 sqlalchemy.Column('feedback_id', sqlalchemy.UUID, primary_key=True),
-                sqlalchemy.Column('user_id', sqlalchemy.UUID, foreign_key=True),
+                sqlalchemy.Column('email', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('feedback_text', sqlalchemy.String),
                 sqlalchemy.Column('text_length', sqlalchemy.Integer, Computed("LENGTH(feedback_text)")),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime),
@@ -306,8 +298,7 @@ class Tables:
     def create_contact_us_table(database_name: str="postgres"):
         """Create the contact_us table in the specified database if it doesn't exist. The following columns are included:
         - contact_id (Integer, primary key)
-        - user_id (Integer, foreign key)
-        - email (String)
+        - email (String, foreign key)
         - message (String)
         - created_datetime (DateTime)
         - updated_datetime (DateTime)
@@ -315,8 +306,7 @@ class Tables:
         if not sqlalchemy_engine.dialect.has_table(connection, "contact_us"):
             sqlalchemy.Table("contact_us", metadata,
                 sqlalchemy.Column('contact_id', sqlalchemy.UUID, primary_key=True),
-                sqlalchemy.Column('user_id', sqlalchemy.UUID, foreign_key=True),
-                sqlalchemy.Column('email', sqlalchemy.String),
+                sqlalchemy.Column('email', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('message', sqlalchemy.String),
                 sqlalchemy.Column('text_length', sqlalchemy.Integer, Computed("LENGTH(message)")),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime),
@@ -516,12 +506,12 @@ class DBUtils:
     #     #     df = pd.read_sql_query(query, connection)
     #     # print(df)
 
-    def add_new_match_to_db(user_id: uuid.UUID, team_1: str="Team_1", team_2: str="Team_2", team_1_rating: float=0.0, team_2_rating: float=0.0, team_1_players: list[uuid.UUID]=[], team_2_players: list[uuid.UUID]=[], team_1_score: int=0, team_2_score: int=0, location: str="Unknown", referee: str="Unknown", match_datetime: datetime.datetime = datetime.datetime.now(), outcome: str = "Unknown", created_datetime: datetime.datetime = datetime.datetime.now(), updated_datetime: datetime.datetime = datetime.datetime.now(), database_name: str="postgres"):
+    def add_new_match_to_db(email: str, team_1: str="Team_1", team_2: str="Team_2", team_1_rating: float=0.0, team_2_rating: float=0.0, team_1_players: list[uuid.UUID]=[], team_2_players: list[uuid.UUID]=[], team_1_score: int=0, team_2_score: int=0, location: str="Unknown", referee: str="Unknown", match_datetime: datetime.datetime = datetime.datetime.now(), outcome: str = "Unknown", created_datetime: datetime.datetime = datetime.datetime.now(), updated_datetime: datetime.datetime = datetime.datetime.now()):
         """Add a new match to the matches table in the specified database with the provided details."""
         match_uuid = uuid.uuid4()
         connection = sqlalchemy_engine.connect()
         matches_insert = sqlalchemy.insert(matches_table).values(
-            match_id=match_uuid,
+            email=email,
             team_1=team_1,
             team_2=team_2,
             team_1_rating=team_1_rating,
@@ -532,8 +522,8 @@ class DBUtils:
             location=location,
             referee=referee,
             outcome=outcome,
-            created_by=user_id,
-            updated_by=user_id,
+            created_by=email,
+            updated_by=email,
             created_datetime=created_datetime,
             updated_datetime=updated_datetime
         )
@@ -549,7 +539,7 @@ class DBUtils:
             player_log_insert = sqlalchemy.insert(player_log_table).values(
                 log_id=uuid.uuid4(),
                 match_id=match_uuid,
-                user_id=user_id,
+                email=email,
                 player_id=player1,
                 team="Team 1",
                 date_created=datetime.datetime.now(),
@@ -559,7 +549,7 @@ class DBUtils:
             player_log_insert = sqlalchemy.insert(player_log_table).values(
                 log_id=uuid.uuid4(),
                 match_id=match_uuid,
-                user_id=user_id,
+                email=email,
                 player_id=player2,
                 team="Team 2",
                 date_created=datetime.datetime.now(),
@@ -570,7 +560,7 @@ class DBUtils:
             conn.execute(matches_insert)
             conn.commit()
 
-    def add_new_player_with_stats_to_db(created_by: uuid.UUID, player_name: str, number_of_games: int=0, wins: int=0, losses: int=0, draws: int=0, points: int=0, win_rate: float=0.0, points_win_rate: float=0.0, points_per_game: float=0.0, created_datetime=datetime.datetime.now(), updated_datetime=datetime.datetime.now(), database_name: str="postgres"):
+    def add_new_player_with_stats_to_db(email: str, player_name: str, number_of_games: int=0, wins: int=0, losses: int=0, draws: int=0, points: int=0, win_rate: float=0.0, points_win_rate: float=0.0, points_per_game: float=0.0, created_datetime=datetime.datetime.now(), updated_datetime=datetime.datetime.now()):
         """Add a new player to the players table in the specified database with the provided details."""
         new_uuid = uuid.uuid4()
         connection = sqlalchemy_engine.connect()
@@ -581,8 +571,8 @@ class DBUtils:
             wins=wins,
             losses=losses,
             draws=draws,
-            created_by=created_by,
-            updated_by=created_by,
+            created_by=email,
+            updated_by=email,
             created_datetime=created_datetime,
             updated_datetime=updated_datetime
         )
@@ -592,19 +582,16 @@ class DBUtils:
         # query = f"INSERT INTO players (player_name, number_of_games, wins, losses, draws, points, win_rate, points_win_rate, points_per_game) VALUES ('{player_name}', {number_of_games}, {wins}, {losses}, {draws}, {points}, {win_rate}, {points_win_rate}, {points_per_game});"
         # connection.execute(sqlalchemy.text(query))
 
-    def add_new_user_to_db(username: str, email: str, password_hash: str, is_active: int = 0, database_name: str="postgres", created_datetime=datetime.datetime.now(), updated_datetime=datetime.datetime.now()):
+    def add_new_user_to_db(username: str, email: str, password_hash: str, is_active: int = 0, created_datetime=datetime.datetime.now(), updated_datetime=datetime.datetime.now()):
         """Add a new user to the users table in the specified database with the provided details."""
         table = sqlalchemy.Table('users', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
-        new_user_uuid = uuid.uuid4()
+        # new_user_uuid = uuid.uuid4()
         connection = sqlalchemy_engine.connect()
         insert = sqlalchemy.insert(table).values(
-            user_id=new_user_uuid,
             username=username,
             email=email,
             password_hash=BackEndUtils.create_password_hash(password_hash),
             is_active=is_active,
-            created_by=new_user_uuid,
-            updated_by=new_user_uuid,
             created_datetime=created_datetime,
             updated_datetime=updated_datetime
         )
@@ -612,9 +599,10 @@ class DBUtils:
             conn.execute(insert)
             conn.commit()
 
-    def get_player_pool_from_db(number_of_players: int, user_id: uuid.UUID, database_name: str="postgres") -> list[dict]:
+    def get_player_pool_from_db(email: str) -> list[dict]:
         """Retrieve a specified number of players from the players table in the database for a specific user and return as a list of dictionaries."""
-        sel = sqlalchemy.select(players_table).where(players_table.c.created_by == user_id)
+        sel = sqlalchemy.select(players_table).where(players_table.c.created_by == email)
+        connection = sqlalchemy_engine.connect()
         df = pd.read_sql_query(sel, connection)
         player_pool = []
         for row in range(len(df)):
@@ -627,8 +615,28 @@ class DBUtils:
             player_pool.append(p)
 
         return player_pool
+    
+    def autoselect_players_from_db(email: str, number_of_players: int) -> list[dict]:
+        """Automatically select a specified number of players from the players table in the database for a specific user and return as a list of dictionaries."""
+        sel = sqlalchemy.select(players_table).where(players_table.c.created_by == email)
+        connection = sqlalchemy_engine.connect()
+        df = pd.read_sql_query(sel, connection)
+        df = df.sample(n=number_of_players)
+        player_pool = []
+        for row in range(len(df)):
+            p = {}
+            p["name"] = df.at[row, "player_name"]
+            p["wins"] = int(df.at[row, "wins"])
+            p["draws"] = int(df.at[row, "draws"])
+            p["losses"] = int(df.at[row, "losses"])
+            p["number_of_games"] = int(df.at[row, "number_of_games"])
+            player_pool.append(p)
 
-    def update_match_outcome(match_id: uuid.UUID, outcome: str, database_name: str="postgres"):
+        chosen_players = random.sample(player_pool, min(number_of_players, len(player_pool)))
+
+        return chosen_players
+
+    def update_match_outcome(match_id: uuid.UUID, outcome: str):
         """Update the outcome of a match in the matches table in the specified database."""
         connection = sqlalchemy_engine.connect()
         stmt = matches_table.update().where(matches_table.c.match_id == match_id).values(outcome=outcome)
@@ -636,7 +644,7 @@ class DBUtils:
             conn.execute(stmt)
             conn.commit()
 
-    def remove_player_from_db(player_id: uuid.UUID, player_name: str, database_name: str="postgres"):
+    def remove_player_from_db(player_id: uuid.UUID, player_name: str):
         """Remove a player from the players table in the specified database."""
         connection = sqlalchemy_engine.connect()
         stmt = players_table.delete().where(players_table.c.player_id == player_id and players_table.c.player_name == player_name)
@@ -644,7 +652,7 @@ class DBUtils:
             conn.execute(stmt)
             conn.commit()
 
-    def check_if_player_in_db(player_name: str, database_name: str="postgres") -> bool:
+    def check_if_player_in_db(player_name: str) -> bool:
         """Check if a player with the given name exists in the players table in the specified database."""
         connection = sqlalchemy_engine.connect()
         query = f"SELECT * FROM players WHERE player_name = '{player_name}';"
@@ -655,14 +663,10 @@ class DBUtils:
             return "A player with this name already exists."
         return True
 
-    def get_user_uuid(username: str="", email: str="", database_name: str="postgres")-> uuid.UUID:
-        """Retrieve the user_id for a given username or email from the users table in the specified database."""
+    def get_user_email_from_username(username: str) -> str | None:
+        """Retrieve the user email for a given username or email from the users table in the specified database."""
         connection = sqlalchemy_engine.connect()
-        print("username: ")
-        print(username)
-        print("email:")
-        print(email)
-        query = f"SELECT user_id FROM users WHERE email = '{email}';"
+        query = f"SELECT email FROM users WHERE username = '{username}';"
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query))
             if result.fetchone() != None:
@@ -670,26 +674,26 @@ class DBUtils:
                 # print(type(result.fetchone().tuple()))
                 return result.fetchone()
             else:
-                return f"Username {username} or email {email} does not exist."
+                return f"There is no email associated with the username {username}."
             
-    def retrieve_user_players(user_id: uuid.UUID, database_name: str="postgres") -> pd.DataFrame:
+    def retrieve_user_players(email: str) -> pd.DataFrame:
         """Retrieve all players from the players table in the database for a specific user and return as a pandas DataFrame."""
         connection = sqlalchemy_engine.connect()
-        query = f"SELECT * FROM players WHERE created_by = '{user_id}';"
+        query = f"SELECT * FROM players WHERE created_by = '{email}';"
         with connection as conn:
             df = pd.read_sql_query(query, conn)
 
         return df
 
-    def delete_user_account(user_id: uuid.UUID, database_name: str="postgres"):
+    def delete_user_account(email: str):
         """Delete a user and all associated data from the database."""
         connection = sqlalchemy_engine.connect()
-        stmtu = users_table.delete().where(users_table.c.user_id == user_id)
-        stmtp = players_table.delete().where(players_table.c.created_by == user_id)
-        stmtm = matches_table.delete().where(matches_table.c.created_by == user_id)
-        stmtl = player_log_table.delete().where(player_log_table.c.created_by == user_id)
-        stmta = activation_tokens_table.delete().where(activation_tokens_table.c.user_id == user_id)
-        stmtpr = password_resets_table.delete().where(password_resets_table.c.user_id == user_id)
+        stmtu = users_table.delete().where(users_table.c.email == email)
+        stmtp = players_table.delete().where(players_table.c.created_by == email)
+        stmtm = matches_table.delete().where(matches_table.c.created_by == email)
+        stmtl = player_log_table.delete().where(player_log_table.c.created_by == email)
+        stmta = activation_tokens_table.delete().where(activation_tokens_table.c.email == email)
+        stmtpr = password_resets_table.delete().where(password_resets_table.c.email == email)
         with connection as conn:
             conn.execute(stmtu)
             conn.execute(stmtp)
@@ -699,7 +703,7 @@ class DBUtils:
             conn.execute(stmtpr)
             conn.commit()
 
-    def check_database_for_email(email: str, database_name: str="postgres") -> bool:
+    def check_database_for_email(email: str) -> bool:
         """Check if a user with the given email exists in the users table in the specified database."""
         connection = sqlalchemy_engine.connect()
         query = f"SELECT * FROM users WHERE email = '{email}';"
@@ -710,16 +714,16 @@ class DBUtils:
             return True
         return False
 
-    def put_password_reset_token_in_db(user_id: uuid.UUID, email: str, token: str, database_name: str="postgres"):
+    def put_password_reset_token_in_db(email: str, token: str):
         """Store password reset token in database with expiry"""
         connection = sqlalchemy_engine.connect()
         new_uuid = uuid.uuid4()
-        query = f"INSERT INTO password_resets (reset_id, user_id, email, reset_token, token_expiry, created_datetime, updated_datetime) VALUES ('{new_uuid}', '{user_id[0]}', '{email}', '{token}', NOW() + INTERVAL '1 hour', NOW(), NOW());"
+        query = f"INSERT INTO password_resets (reset_id, email, reset_token, token_expiry, created_datetime, updated_datetime) VALUES ('{new_uuid}', '{email}', '{token}', NOW() + INTERVAL '1 hour', NOW(), NOW());"
         with connection as conn:
             conn.execute(sqlalchemy.text(query))
             conn.commit()
 
-    def check_if_user_exists(email: str, username: str, database_name: str="postgres") -> bool:
+    def check_if_user_exists(email: str, username: str) -> bool:
         """Check if a user with the given email or username exists in the users table in the specified database."""
         connection = sqlalchemy_engine.connect()
         equery = f"SELECT * FROM users WHERE email = '{email}';"
@@ -735,7 +739,7 @@ class DBUtils:
             return "Username already exists."
         return True
 
-    def get_password_reset_tokens(database_name: str="postgres") -> list[str]:
+    def get_password_reset_tokens() -> list[str]:
         """Retrieve all active password reset tokens from the database"""
         connection = sqlalchemy_engine.connect()
         query = f"SELECT reset_token FROM password_resets WHERE token_expiry > NOW() AND token_expiry < NOW() + INTERVAL '1 hour';"
@@ -745,7 +749,7 @@ class DBUtils:
 
         return [row[0] for row in rows]
 
-    def replace_user_password(email: str, new_password: str, database_name: str="postgres"):
+    def replace_user_password(email: str, new_password: str):
         """Update the user's password in the users table in the specified database."""
         connection = sqlalchemy_engine.connect()
         query = f"UPDATE users SET password_hash = '{BackEndUtils.create_password_hash(new_password)}', updated_datetime = NOW() WHERE email = '{email}';"
@@ -753,7 +757,7 @@ class DBUtils:
             conn.execute(sqlalchemy.text(query))
             conn.commit()
 
-    def get_user_email_from_token(token: str, database_name: str="postgres") -> str | None:
+    def get_user_email_from_token(token: str) -> str | None:
         """Get user email from password reset token if valid"""
         connection = sqlalchemy_engine.connect()
         query = f"SELECT email FROM password_resets WHERE reset_token = '{token}' AND token_expiry > NOW();"
@@ -764,7 +768,7 @@ class DBUtils:
             return row[0]
         return None
 
-    def get_active_activation_tokens_for_email(email: str, database_name: str = "postgres"):
+    def get_active_activation_tokens_for_email(email: str):
         """Retrieve all active activation tokens for a specific email from the database"""
         connection = sqlalchemy_engine.connect()
         query = f"SELECT token FROM activation_tokens WHERE expires_at > NOW() and email = '{email}'"
@@ -774,11 +778,10 @@ class DBUtils:
 
         return tokens
 
-    def put_activation_token_in_db(user_uuid: str, email: str, token: str, database_name: str="postgres"):
+    def put_activation_token_in_db(email: str, token: str):
         """Store activation token in database with expiry"""
         connection = sqlalchemy_engine.connect()
         tokens_insert = sqlalchemy.insert(activation_tokens_table).values(
-            user_id=user_uuid[0],
             email=email,
             token=token,
             expires_at=datetime.datetime.now() + datetime.timedelta(hours=24),  # Token valid for 24 hours
@@ -788,7 +791,7 @@ class DBUtils:
             conn.execute(tokens_insert)
             conn.commit()
 
-    def get_user_email_from_activation_token(token: str, database_name: str = "postgres"):
+    def get_user_email_from_activation_token(token: str):
         """Get user email from activation token if valid"""
         connection = sqlalchemy_engine.connect()
         query = f"SELECT email FROM activation_tokens WHERE token = {token} AND expires_at > NOW()"
@@ -879,13 +882,14 @@ class DBUtils:
         
         return [row[0] for row in tokens]
 
-    def store_user_feedback_in_db(email: str, feedback: str, database_name: str = "postgres"):
+    def store_user_feedback_in_db(email: str, feedback: str):
         """Store user feedback in the database"""
         connection = sqlalchemy_engine.connect()
-        user_id = DBUtils.get_user_uuid(email=email)
+        # user_id = DBUtils.get_user_uuid(email=email)
         feedback_insert = sqlalchemy.insert(feedback_table).values(
             feedback_id=uuid.uuid4(),
-            user_id=user_id,
+            email=email,
+            # user_iduser_id,
             feedback_text=feedback,
             # text_length=len(feedback),
             created_datetime=datetime.datetime.now(),
@@ -895,14 +899,12 @@ class DBUtils:
             conn.execute(feedback_insert)
             conn.commit()
 
-    def store_contact_us_message(email: str, message: str, database_name: str = "postgres"):
+    def store_contact_us_message(email: str, message: str):
         """Store contact us message in the database"""
         connection = sqlalchemy_engine.connect()
         ticket_id = uuid.uuid4()
-        user_id = DBUtils.get_user_uuid(email=email)
         contact_us_insert = sqlalchemy.insert(contact_us_table).values(
             contact_id=ticket_id,
-            user_id=user_id,
             email=email,
             message=message,
             # text_length=len(message),
@@ -962,10 +964,8 @@ class BackEndUtils:
         hashed_password = bcrypt.hashpw(bytes_password, salt)
         return hashed_password.decode('utf-8')
 
-    def authenticate_user(username_email: str, password: str, database_name: str="postgres") -> list[bool, str | None]:
+    def authenticate_user(username_email: str, password: str) -> list[bool, str | None]:
         """Authenticate a user by checking the provided username/email and password against the database."""
-        load_dotenv()
-        sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{database_name}')
         connection = sqlalchemy_engine.connect()
         uquery = f"SELECT username FROM users WHERE email = '{username_email}' OR username = '{username_email}'"
         pquery = f"SELECT password_hash FROM users WHERE email = '{username_email}' OR username = '{username_email}';"
@@ -1142,9 +1142,8 @@ class BackEndUtils:
             s.send_message(msg)
             print("Contact us acknowledgement email sent.")
 
-    def balance_teams(list_of_player_names: list, username: str):
-        user_uuid = DBUtils.get_user_uuid(username, database_name="testing")[0]
-        all_players = DBUtils.retrieve_user_players(user_uuid, database_name="testing")
+    def balance_teams(list_of_player_names: list, email: str):
+        all_players = DBUtils.retrieve_user_players(email)
         print(all_players[all_players["points_win_rate"].isna()])
         all_players.fillna(0, inplace=True)
         print(all_players[all_players["points_win_rate"].isna()]["points_win_rate"])
@@ -1175,7 +1174,7 @@ class BackEndUtils:
                 team_2 = [player for player in players_ids if player not in team_1]
 
             DBUtils.add_new_match_to_db(
-                user_id=user_uuid,
+                email=email,
                 team_1_players=team_1,
                 team_2_players=team_2
             )

@@ -1140,7 +1140,7 @@ function init(){
 
 async function fetchPlayers(){
     try {
-        const resp = await fetch('/api/get_players');
+        const resp = await fetch('/get_players');
         const data = await resp.json();
         players = data.players || [];
         renderPlayers();
@@ -1386,7 +1386,7 @@ async function autoSelect(){
     }
     
     try {
-        const resp = await fetch('/api/autoselect', {
+        const resp = await fetch('/autoselect', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({n: totalNeeded})
@@ -1745,7 +1745,7 @@ function init(){
 
 async function fetchPlayers(){
     try {
-        const resp = await fetch('/api/get_players');
+        const resp = await fetch('/get_players');
         const data = await resp.json();
         players = data.players || [];
         renderPlayers();
@@ -1755,7 +1755,7 @@ async function fetchPlayers(){
 }
 
 async function balanceTeams() {
-    const resp = await fetch('/api/balanceteams', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamA, teamB }) });
+    const resp = await fetch('/balanceteams', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamA, teamB }) });
     const data = await resp.json();
     teamA = data.teamA;
     teamB = data.teamB;
@@ -2030,7 +2030,7 @@ async function autoSelect(){
     }
     
     try {
-        const resp = await fetch('/api/autoselect', {
+        const resp = await fetch('/autoselect', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({n: totalNeeded})
