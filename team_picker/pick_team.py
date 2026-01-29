@@ -433,38 +433,55 @@ if sqlalchemy_engine.dialect.has_table(connection, "matches"):
     matches_table = sqlalchemy.Table('matches', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_matches_table(database_name="testing")
+    matches_table = sqlalchemy.Table('matches', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "players"):
     players_table = sqlalchemy.Table('players', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_players_table(database_name="testing")
+    players_table = sqlalchemy.Table('players', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "users"):
     users_table = sqlalchemy.Table('users', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_users_table(database_name="testing")
+    users_table = sqlalchemy.Table('users', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "matches"):
     matches_table = sqlalchemy.Table('matches', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_matches_table(database_name="testing")
+    matches_table = sqlalchemy.Table('matches', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "player_log"):
     player_log_table = sqlalchemy.Table('player_log', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_player_log_table(database_name="testing")
+    player_log_table = sqlalchemy.Table('player_log', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "activation_tokens"):
     activation_tokens_table = sqlalchemy.Table('activation_tokens', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_activation_tokens_table(database_name="testing")
+    activation_tokens_table = sqlalchemy.Table('activation_tokens', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "password_resets"):
     password_resets_table = sqlalchemy.Table('password_resets', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_password_resets_table(database_name="testing")
+    password_resets_table = sqlalchemy.Table('password_resets', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "feedback"):
     feedback_table = sqlalchemy.Table('feedback', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_feedback_table(database_name="testing")
+    feedback_table = sqlalchemy.Table('feedback', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
+
 if sqlalchemy_engine.dialect.has_table(connection, "contact_us"):
     contact_us_table = sqlalchemy.Table('contact_us', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
     Tables.create_contact_us_table(database_name="testing")
+    contact_us_table = sqlalchemy.Table('contact_us', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 
 # class Whatsapp:
 #     def __init__(self):
