@@ -798,7 +798,9 @@ class DBUtils:
     def put_activation_token_in_db(email: str, token: str):
         """Store activation token in database with expiry"""
         connection = sqlalchemy_engine.connect()
+        new_uuid = uuid.uuid4()
         tokens_insert = sqlalchemy.insert(activation_tokens_table).values(
+            activation_id=new_uuid,
             email=email,
             token=token,
             expires_at=datetime.datetime.now() + datetime.timedelta(hours=24),  # Token valid for 24 hours
