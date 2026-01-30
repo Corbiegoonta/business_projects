@@ -27,6 +27,7 @@ app = Flask(__name__)
 
 load_dotenv()
 MY_EMAIL = os.getenv('RESEND_DOMAIN')
+TEAM_PICKER_EMAIL = os.getenv('TEAM_PICKER_EMAIL')
 MY_APP_PASSWORD = os.getenv('MY_APP_PASSWORD')
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 
@@ -1138,7 +1139,7 @@ class BackEndUtils:
             <body>
                 <div class="container">
                     <div class="content">
-                        <h2>Welcome! Please Activate Your Account</h2>
+                        <h2>Welcome to Team Picker! Please Activate Your Account</h2>
                         <p>Thank you for creating an account. To get started, please activate your account by clicking the button below:</p>
                         <a href="{activation_link}" class="button">Activate Account</a>
                         <p>Or copy and paste this link into your browser:</p>
@@ -1253,7 +1254,7 @@ class BackEndUtils:
     def send_feedback_email_notification(feedback: str, email: str, feedback_type: str, feedback_subject: str):
         """Send feedback email notification to admin"""
         resend.Emails.send({'from': MY_EMAIL, 
-                                            'to': MY_EMAIL, 
+                                            'to': TEAM_PICKER_EMAIL, 
                                             'subject': f"Feedback - {feedback_subject} - {feedback_type} - {email}",
                                             'html': f"""<!DOCTYPE html>
 <html>
@@ -1364,7 +1365,7 @@ class BackEndUtils:
     def send_contact_us_email_notification(message: str, email: str, issue_type: str, priority, subject: str, ticket_id: str):
         """Send contact us email notification to admin"""
         resend.Emails.send({'from': MY_EMAIL, 
-                                            'to': MY_EMAIL, 
+                                            'to': TEAM_PICKER_EMAIL, 
                                             'subject': f"Issue {priority} - {subject} - {issue_type} - {email}",
                                             'html': f"""<!DOCTYPE html>
 <html>
