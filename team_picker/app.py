@@ -88,7 +88,7 @@ def login():
         if resp is True:
             # Check if account is activated
             email = emailusername if '@' in emailusername else DBUtils.get_email_from_username(emailusername)
-            print(f"Checking activation status for email: {email}")
+            print(f"Checking activation status for email: {email} and username: {uname}")
             if DBUtils.is_user_activated(email) == 0:
                 return jsonify({
                     "error": "Please activate your account. Check your email for the activation link.",
