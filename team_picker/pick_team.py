@@ -1021,10 +1021,10 @@ class BackEndUtils:
     def send_password_reset_email(email: str, password_reset_link: str):
         """Send password reset email to user"""
         try:
-            resend.Emails.send(from_email=MY_EMAIL, 
-                                                to=email, 
-                                                subject="Password Reset Request - Team Picker", 
-                                                html=f"""
+            resend.Emails.send({'from': MY_EMAIL, 
+                                'to': email, 
+                                'subject': "Password Reset Request - Team Picker", 
+                                'html': f"""
             <!DOCTYPE html>
             <html>
             <head>
@@ -1085,17 +1085,17 @@ class BackEndUtils:
                 </div>
             </body>
             </html>
-            """)
+            """})
         except Exception as e:
             print(f"Failed to send password reset email: {str(e)}")
 
     def send_activation_email(email: str, activation_link: str):
         """Send activation email to user"""
         try:
-            resend.Emails.send(from_email=MY_EMAIL, 
-                                            to=email, 
-                                            subject="Account Activation - Team Picker", 
-                                            html=f"""
+            resend.Emails.send({'from': MY_EMAIL, 
+                                'to': email, 
+                                'subject': "Account Activation - Team Picker", 
+                                'html': f"""
             <!DOCTYPE html>
             <html>
             <head>
@@ -1152,7 +1152,7 @@ class BackEndUtils:
                 </div>
             </body>
             </html>
-            """)
+            """})
             print(f"Activation email sent successfully to {email}")
         except Exception as e:
             print(f"Failed to send activation email: {str(e)}")
@@ -1252,10 +1252,10 @@ class BackEndUtils:
            
     def send_feedback_email_notification(feedback: str, email: str, feedback_type: str, feedback_subject: str):
         """Send feedback email notification to admin"""
-        resend.Emails.send(from_email=MY_EMAIL, 
-                                            to=MY_EMAIL, 
-                                            subject=f"Feedback - {feedback_subject} - {feedback_type} - {email}",
-                                            html=f"""<!DOCTYPE html>
+        resend.Emails.send({'from': MY_EMAIL, 
+                                            'to': MY_EMAIL, 
+                                            'subject': f"Feedback - {feedback_subject} - {feedback_type} - {email}",
+                                            'html': f"""<!DOCTYPE html>
 <html>
 <head>
     <style>
@@ -1346,7 +1346,7 @@ class BackEndUtils:
         </div>
     </div>
 </body>
-</html>""")
+</html>"""})
  
         # msg = EmailMessage()
         # msg.set_content(f"New user feedback received from {user_uuid}:\n\n{feedback}")
@@ -1363,10 +1363,10 @@ class BackEndUtils:
 
     def send_contact_us_email_notification(message: str, email: str, issue_type: str, priority, subject: str, ticket_id: str):
         """Send contact us email notification to admin"""
-        resend.Emails.send(from_email=MY_EMAIL, 
-                                            to=MY_EMAIL, 
-                                            subject=f"Issue {priority} - {subject} - {issue_type} - {email}",
-                                            html=f"""<!DOCTYPE html>
+        resend.Emails.send({'from': MY_EMAIL, 
+                                            'to': MY_EMAIL, 
+                                            'subject': f"Issue {priority} - {subject} - {issue_type} - {email}",
+                                            'html': f"""<!DOCTYPE html>
 <html>
 <head>
     <style>
@@ -1491,7 +1491,7 @@ class BackEndUtils:
         </div>
     </div>
 </body>
-</html>""")
+</html>"""})
 
     #     msg = EmailMessage()
     #     msg.set_content(f"New contact us message received from {user_uuid} ({email}):\n\n{message}")
@@ -1508,10 +1508,10 @@ class BackEndUtils:
     
     def send_contact_us_email_acknowledgement(message: str, email: str, issue_type: str, subject: str, priority: str, ticket_id: str):
         """Send contact us email acknowledgement to user"""
-        resend.Emails.send(from_email=MY_EMAIL, 
-                                            to=email, 
-                                            subject="We Received Your Message - Team Picker",
-                                            html=f"""<!DOCTYPE html>
+        resend.Emails.send({'from': MY_EMAIL, 
+                                            'to': email, 
+                                            'subject': "We Received Your Message - Team Picker",
+                                            'html': f"""<!DOCTYPE html>
 <html>
 <head>
     <style>
@@ -1601,7 +1601,7 @@ class BackEndUtils:
         </div>
     </div>
 </body>
-</html>""")
+</html>"""})
         # msg = EmailMessage()
         # msg.set_content(f"Thank you for contacting us. We have received your message:\n\n{message}\n\nWe will get back to you shortly.")
         # msg['Subject'] = 'Contact Us Acknowledgement'
