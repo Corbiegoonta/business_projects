@@ -6,6 +6,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta
 from website import NEW_HOME_HTML, PICK_TEAM_HTML, PICK_TEAM_HTML_LOGGED_IN, FORGOT_PASSWORD_HTML, RESET_PASSWORD_HTML, INVALID_EXPIRED_RESET_TOKEN_HTML, INVALID_ACTIVATION_LINK_HTML, FAILED_ACCOUNT_ACTIVATION_HTML, ACCOUNT_ACTIVATED_HTML
+import traceback
 
 
 app = Flask(__name__)
@@ -385,7 +386,7 @@ def activate_account():
 
         return render_template_string(ACCOUNT_ACTIVATED_HTML)
     except Exception as e:
-        print(f"Error during account activation: {e}. Traceback: {e.__traceback__}, ErrorType: {type(e)}")
+        print(f"Error during account activation: {e}. Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
         return jsonify({'error': 'An error occurred while processing the request.', 'status': 500}), 500
 
 
