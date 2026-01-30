@@ -378,14 +378,14 @@ def activate_account():
             return render_template_string(FAILED_ACCOUNT_ACTIVATION_HTML)
         
         # Activate the user account
-        DBUtils.activate_user_account(email, database_name="testing")
+        DBUtils.activate_user_account(email)
         
         # Delete the used activation token
-        DBUtils.delete_activation_token(token, database_name="testing")
+        DBUtils.delete_activation_token(token)
 
         return render_template_string(ACCOUNT_ACTIVATED_HTML)
     except Exception as e:
-        print(f"Error during account activation: {e}")
+        print(f"Error during account activation: {e.with_traceback()}")
         return jsonify({'error': 'An error occurred while processing the request.', 'status': 500}), 500
 
 

@@ -836,7 +836,7 @@ class DBUtils:
     def activate_user_account(email: str, database_name: str = "postgres"):
         """Set user account as active"""
         connection = sqlalchemy_engine.connect()
-        query = f"UPDATE users SET is_active = 1, activated_at = :datetime WHERE email = :email"
+        query = f"UPDATE users SET is_active = 1, activated_at = :datetime WHERE email = :email;"
         with connection as conn:
             conn.execute(sqlalchemy.text(query), {"datetime": datetime.datetime.now(), "email": email})
             conn.commit()
