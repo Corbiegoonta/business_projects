@@ -18,6 +18,7 @@ app.secret_key = 'your-secret-key-here-change-in-production'  # Required for ses
 @app.route('/')
 def home():
     user = request.cookies.get('user', None)
+    print("User from cookie:", user)
     response = make_response(render_template_string(NEW_HOME_HTML, user=user))
     if user is not None:
         response.set_cookie('email', DBUtils.get_user_email_from_username(user), max_age=60*60*24*7)
