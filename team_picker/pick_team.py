@@ -57,7 +57,11 @@ class Users(Base):
     __tablename__ = 'users'
     username = Column(String, primary_key=True)
     email = Column(String)
+    is_active = Column(Integer)
     hashed_password = Column(String)  
+    activated_at = Column(DateTime)
+    created_datetime = Column(DateTime)
+    updated_datetime = Column(DateTime)
 
 class Matches(Base):
     __tablename__ = 'matches'
@@ -192,6 +196,7 @@ class Tables:
         - email (String, primary key)
         - password_hash (String)
         - is_active (Integer, default 0)
+        - activated_at (DateTime)
         - created_by (String, foreign key)
         - updated_by (String, foreign key)
         - created_datetime (DateTime, default current timestamp)
@@ -202,6 +207,7 @@ class Tables:
                 sqlalchemy.Column('email', sqlalchemy.String, primary_key=True),
                 sqlalchemy.Column('password_hash', sqlalchemy.String),
                 sqlalchemy.Column('is_active', sqlalchemy.Integer, default=0),
+                sqlalchemy.Column('activated_at', sqlalchemy.DateTime),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
                 sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime, default=datetime.datetime.now(), onupdate=datetime.datetime.now())
             )
