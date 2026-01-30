@@ -63,7 +63,7 @@ def create_account():
             DBUtils.put_activation_token_in_db(email, activation_token)
 
             # Send activation email
-            activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
+            activation_link = f"https://team-picker-e3k0.onrender.com/activate_account?token={activation_token}"
             BackEndUtils.send_activation_email(email, activation_link)
 
             return jsonify({

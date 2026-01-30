@@ -1086,14 +1086,14 @@ class BackEndUtils:
         """
         
         # For development, just print to console
-        print(f"\n{'='*60}")
-        print(f"ACTIVATION EMAIL for {email}")
-        print(f"{'='*60}")
-        print(f"Link: {activation_link}")
-        print(f"{'='*60}\n")
-        print(f"EMAIL USERNAME: {SMTP_USERNAME}")
-        print(f"EMAIL PASSWORD: {SMTP_PASSWORD}")
-        print(f"{'='*60}\n")
+        # print(f"\n{'='*60}")
+        # print(f"ACTIVATION EMAIL for {email}")
+        # print(f"{'='*60}")
+        # print(f"Link: {activation_link}")
+        # print(f"{'='*60}\n")
+        # print(f"EMAIL USERNAME: {SMTP_USERNAME}")
+        # print(f"EMAIL PASSWORD: {SMTP_PASSWORD}")
+        # print(f"{'='*60}\n")
         
         # Uncomment below to actually send emails in production
         
