@@ -842,9 +842,9 @@ class DBUtils:
     def activate_user_account(email: str, database_name: str = "postgres"):
         """Set user account as active"""
         connection = sqlalchemy_engine.connect()
-        query = f"UPDATE users SET is_active = 1, activated_at = :datetime WHERE email = :email;"
+        query = f"UPDATE users SET is_active = 1, activated_at = %s WHERE email = %s;"
         with connection as conn:
-            conn.execute(sqlalchemy.text(query), {"datetime": datetime.datetime.now(), "email": email})
+            conn.execute(sqlalchemy.text(query), (datetime.datetime.now(), email))
             conn.commit()
 
     def delete_activation_token(token: str, database_name: str = "postgres"):
@@ -865,7 +865,7 @@ class DBUtils:
         
         return row[0] if row else None
 
-    def activate_user_account(email: str, database_name: str = "postgres"):
+    def activate_user_account(email: str):
         """Set user account as active"""
         connection = sqlalchemy_engine.connect()
         query = f"UPDATE users SET is_active = 1, activated_at = %s WHERE email = %s"
@@ -873,44 +873,44 @@ class DBUtils:
             conn.execute(sqlalchemy.text(query), (datetime.datetime.now(), email))
             conn.commit()
 
-    def delete_activation_token(token: str, database_name: str = "postgres"):
+    def delete_activation_token(token: str):
         """Remove activation token after use"""
         connection = sqlalchemy_engine.connect()
-        query = f"DELETE FROM activation_tokens WHERE token = {token}"
+        query = f"DELETE FROM activation_tokens WHERE token = %s"
         with connection as conn:
-            conn.execute(sqlalchemy.text(query))
+            conn.execute(sqlalchemy.text(query), (token))
             conn.commit()
 
-    def delete_old_activation_tokens(email: str, database_name: str = "postgres"):
+    def delete_old_activation_tokens(email: str):
         """Remove old activation tokens for a user"""
         connection = sqlalchemy_engine.connect()
-        query = f"DELETE FROM activation_tokens WHERE email = {email}"
+        query = f"DELETE FROM activation_tokens WHERE email = %s AND expires_at < %s"
         with connection as conn:
-            conn.execute(sqlalchemy.text(query))
+            conn.execute(sqlalchemy.text(query), (email, datetime.datetime.now()))
             conn.commit()
 
-    def is_user_activated(email: str, database_name: str = "postgres") -> int:
+    def is_user_activated(email: str) -> int:
         """Check if user account is activated"""
         connection = sqlalchemy_engine.connect()
-        query = f"SELECT is_active FROM users WHERE email = '{email}'"
+        query = f"SELECT is_active FROM users WHERE email = %s"
         with connection as conn:
-            result = conn.execute(sqlalchemy.text(query))
+            result = conn.execute(sqlalchemy.text(query), (email,))
             row = result.fetchone()
         
         return row[0]
 
-    def get_email_from_username(username: str, database_name: str = "postgres") -> str | None:
+    def get_email_from_username(username: str) -> str | None:
         """Get email address from username"""
         connection = sqlalchemy_engine.connect()
-        query = f"SELECT email FROM users WHERE username = '{username}'"
+        query = f"SELECT email FROM users WHERE username = %s"
         with connection as conn:
-            result = conn.execute(sqlalchemy.text(query))
+            result = conn.execute(sqlalchemy.text(query), (username,))
             row = result.fetchone()
         
         return row[0] if row else None
 
 
-    def get_activation_tokens(database_name: str = "postgres"):
+    def get_activation_tokens():
         """Get all valid activation tokens (for verification purposes)"""
         connection = sqlalchemy_engine.connect()
         query = "SELECT token FROM activation_tokens WHERE expires_at > NOW()"
