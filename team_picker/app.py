@@ -84,12 +84,12 @@ def login():
     password = data.get('password', 'No password')
 
     try:
-        resp, uname = BackEndUtils.authenticate_user(emailusername, password, database_name="testing")
+        resp, uname = BackEndUtils.authenticate_user(emailusername, password)
         if resp is True:
             # Check if account is activated
-            email = emailusername if '@' in emailusername else DBUtils.get_email_from_username(emailusername, database_name="testing")
+            email = emailusername if '@' in emailusername else DBUtils.get_email_from_username(emailusername)
             print(f"Checking activation status for email: {email}")
-            if DBUtils.is_user_activated(email, database_name="testing") == 0:
+            if DBUtils.is_user_activated(email) == 0:
                 return jsonify({
                     "error": "Please activate your account. Check your email for the activation link.",
                     "status": 403
