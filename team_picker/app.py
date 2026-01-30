@@ -385,7 +385,7 @@ def activate_account():
 
         return render_template_string(ACCOUNT_ACTIVATED_HTML)
     except Exception as e:
-        print(f"Error during account activation: {e.with_traceback()}")
+        print(f"Error during account activation: {e}")
         return jsonify({'error': 'An error occurred while processing the request.', 'status': 500}), 500
 
 
