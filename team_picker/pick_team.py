@@ -26,7 +26,7 @@ import resend
 app = Flask(__name__)
 
 load_dotenv()
-MY_EMAIL = os.getenv('MY_EMAIL')
+MY_EMAIL = os.getenv('RESEND_DOMAIN')
 MY_APP_PASSWORD = os.getenv('MY_APP_PASSWORD')
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 
