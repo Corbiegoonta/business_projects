@@ -1,5 +1,4 @@
 # from send_whatsapp.src import sender
-import email
 from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
@@ -20,6 +19,7 @@ import smtplib
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import resend
 
 # from models import User, Department  # Assuming the models above
 
@@ -28,10 +28,12 @@ app = Flask(__name__)
 load_dotenv()
 MY_EMAIL = os.getenv('MY_EMAIL')
 MY_APP_PASSWORD = os.getenv('MY_APP_PASSWORD')
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+
+resend.api_key = RESEND_API_KEY
 
 # sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/testing')
 sqlalchemy_engine = sqlalchemy.create_engine('postgresql://testing_70hf_user:RhDNPOBOz0Lo8UlSiRIIYFE7Dt6yfv1Z@dpg-d5rluacoud1c73eo14c0-a/testing_70hf')
-
 connection = sqlalchemy_engine.connect()
 session = Session(sqlalchemy_engine)
 metadata = sqlalchemy.MetaData()
@@ -83,6 +85,8 @@ class Feedback(Base):
     email = Column(String, foreign_key=True)
     feedback_text = Column(String)
     text_length = Column(Integer)
+    feedback_type = Column(String)
+    feedback_subject = Column(String)
     created_datetime = Column(DateTime)
     updated_datetime = Column(DateTime)
 
@@ -91,6 +95,9 @@ class ContactUs(Base):
     contact_id = Column(Integer, primary_key=True)
     email = Column(String, foreign_key=True)
     message = Column(String)
+    issue_type = Column(String)
+    issue_subject = Column(String)
+    issue_priority = Column(String)
     text_length = Column(Integer)
     created_datetime = Column(DateTime)
     updated_datetime = Column(DateTime)
@@ -288,6 +295,8 @@ class Tables:
                 sqlalchemy.Column('email', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('feedback_text', sqlalchemy.String),
                 sqlalchemy.Column('text_length', sqlalchemy.Integer, Computed("LENGTH(feedback_text)")),
+                sqlalchemy.Column('feedback_type', sqlalchemy.String),
+                sqlalchemy.Column('feedback_subject', sqlalchemy.String),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime),
                 sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime)
             )
@@ -309,6 +318,9 @@ class Tables:
                 sqlalchemy.Column('email', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('message', sqlalchemy.String),
                 sqlalchemy.Column('text_length', sqlalchemy.Integer, Computed("LENGTH(message)")),
+                sqlalchemy.Column('issue_type', sqlalchemy.String),
+                sqlalchemy.Column('issue_subject', sqlalchemy.String),
+                sqlalchemy.Column('issue_priority', sqlalchemy.String),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime),
                 sqlalchemy.Column('updated_datetime', sqlalchemy.DateTime)
             )
@@ -901,7 +913,7 @@ class DBUtils:
         
         return [row[0] for row in tokens]
 
-    def store_user_feedback_in_db(email: str, feedback: str):
+    def store_user_feedback_in_db(email: str, feedback: str, feedback_type: str="General", feedback_subject: str="User Feedback"):
         """Store user feedback in the database"""
         connection = sqlalchemy_engine.connect()
         # user_id = DBUtils.get_user_uuid(email=email)
@@ -910,6 +922,8 @@ class DBUtils:
             email=email,
             # user_iduser_id,
             feedback_text=feedback,
+            feedback_type=feedback_type,
+            feedback_subject=feedback_subject,
             # text_length=len(feedback),
             created_datetime=datetime.datetime.now(),
             updated_datetime=datetime.datetime.now()
@@ -918,7 +932,7 @@ class DBUtils:
             conn.execute(feedback_insert)
             conn.commit()
 
-    def store_contact_us_message(email: str, message: str):
+    def store_contact_us_message(email: str, message: str, issue_type: str="General Inquiry", issue_subject: str="Contact Us Message", issue_priority: str="Normal") -> str:
         """Store contact us message in the database"""
         connection = sqlalchemy_engine.connect()
         ticket_id = uuid.uuid4()
@@ -926,6 +940,9 @@ class DBUtils:
             contact_id=ticket_id,
             email=email,
             message=message,
+            issue_type=issue_type,
+            issue_subject=issue_subject,
+            issue_priority=issue_priority,
             # text_length=len(message),
             created_datetime=datetime.datetime.now(),
             updated_datetime=datetime.datetime.now()
@@ -1003,87 +1020,209 @@ class BackEndUtils:
 
     def send_password_reset_email(email: str, password_reset_link: str):
         """Send password reset email to user"""
-        msg = EmailMessage()
-        msg.set_content(f"Click the link to reset your password: {password_reset_link}")
-        msg['Subject'] = 'Password Reset Request'
-        msg['From'] = MY_EMAIL
-        msg['To'] = email
-        print("Connecting to SMTP server...")
-        with smtplib.SMTP('smtp.gmail.com', port=587) as s:
-            s.starttls()
-            s.login(MY_EMAIL, MY_APP_PASSWORD)
-            print("Sending email...")
-            s.send_message(msg)
-            print("Email sent.")
+        try:
+            resend.Emails.send(from_email=MY_EMAIL, 
+                                                to=email, 
+                                                subject="Password Reset Request - Team Picker", 
+                                                html=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        margin: 0;
+                        padding: 0;
+                    }}
+                    .container {{
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #f9f9f9;
+                    }}
+                    .content {{
+                        background-color: white;
+                        padding: 30px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }}
+                    .button {{
+                        display: inline-block;
+                        padding: 12px 30px;
+                        margin: 20px 0;
+                        background-color: #667eea;
+                        color: #ffffff !important;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                    }}
+                    .footer {{
+                        margin-top: 20px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="content">
+                        <h2>Reset Your Password</h2>
+                        <p>Hello,</p>
+                        <p>We received a request to reset the password for your account. Click the button below to choose a new one:</p>
+                        <a href="{password_reset_link}" class="button">Reset Password</a>
+                        <p>Or copy and paste this link into your browser:</p>
+                        <p style="word-break: break-all; color: #667eea;">{password_reset_link}</p>
+                        <p><strong>Note:</strong> This link will expire in {1} hour. </p>
+                        <p>If you didn't request a password reset, you can safely ignore this email. Your password will not change until you access the link above and create a new one.</p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated email. Please do not reply.</p>
+                        <p>&copy; {datetime.datetime.now().year} Team Picker</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """)
+        except Exception as e:
+            print(f"Failed to send password reset email: {str(e)}")
 
     def send_activation_email(email: str, activation_link: str):
         """Send activation email to user"""
-        # Configure your SMTP settings
-        SMTP_SERVER = "smtp.gmail.com"  # Change to your SMTP server
-        SMTP_PORT = 587
-        SMTP_USERNAME = MY_EMAIL
-        SMTP_PASSWORD = MY_APP_PASSWORD
+        try:
+            resend.Emails.send(from_email=MY_EMAIL, 
+                                            to=email, 
+                                            subject="Account Activation - Team Picker", 
+                                            html=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                    }}
+                    .container {{
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #f9f9f9;
+                    }}
+                    .content {{
+                        background-color: white;
+                        padding: 30px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }}
+                    .button {{
+                        display: inline-block;
+                        padding: 12px 30px;
+                        margin: 20px 0;
+                        background-color: #667eea;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                    }}
+                    .footer {{
+                        margin-top: 20px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="content">
+                        <h2>Welcome! Please Activate Your Account</h2>
+                        <p>Thank you for creating an account. To get started, please activate your account by clicking the button below:</p>
+                        <a href="{activation_link}" class="button">Activate Account</a>
+                        <p>Or copy and paste this link into your browser:</p>
+                        <p style="word-break: break-all; color: #667eea;">{activation_link}</p>
+                        <p>This link will expire in 24 hours.</p>
+                        <p>If you didn't create this account, please ignore this email.</p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated email. Please do not reply.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """)
+            print(f"Activation email sent successfully to {email}")
+        except Exception as e:
+            print(f"Failed to send activation email: {str(e)}")
+    
+        # # Configure your SMTP settings
+        # SMTP_SERVER = "smtp.gmail.com"  # Change to your SMTP server
+        # SMTP_PORT = 587
+        # SMTP_USERNAME = MY_EMAIL
+        # SMTP_PASSWORD = MY_APP_PASSWORD
 
-        subject = "Activate Your Account"
+        # subject = "Activate Your Account"
         
-        html_body = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{
-                    font-family: Arial, sans-serif;
-                    line-height: 1.6;
-                    color: #333;
-                }}
-                .container {{
-                    max-width: 600px;
-                    margin: 0 auto;
-                    padding: 20px;
-                    background-color: #f9f9f9;
-                }}
-                .content {{
-                    background-color: white;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }}
-                .button {{
-                    display: inline-block;
-                    padding: 12px 30px;
-                    margin: 20px 0;
-                    background-color: #667eea;
-                    color: white;
-                    text-decoration: none;
-                    border-radius: 8px;
-                    font-weight: bold;
-                }}
-                .footer {{
-                    margin-top: 20px;
-                    text-align: center;
-                    color: #666;
-                    font-size: 12px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="content">
-                    <h2>Welcome! Please Activate Your Account</h2>
-                    <p>Thank you for creating an account. To get started, please activate your account by clicking the button below:</p>
-                    <a href="{activation_link}" class="button">Activate Account</a>
-                    <p>Or copy and paste this link into your browser:</p>
-                    <p style="word-break: break-all; color: #667eea;">{activation_link}</p>
-                    <p>This link will expire in 24 hours.</p>
-                    <p>If you didn't create this account, please ignore this email.</p>
-                </div>
-                <div class="footer">
-                    <p>This is an automated email. Please do not reply.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        # html_body = f"""
+        # <!DOCTYPE html>
+        # <html>
+        # <head>
+        #     <style>
+        #         body {{
+        #             font-family: Arial, sans-serif;
+        #             line-height: 1.6;
+        #             color: #333;
+        #         }}
+        #         .container {{
+        #             max-width: 600px;
+        #             margin: 0 auto;
+        #             padding: 20px;
+        #             background-color: #f9f9f9;
+        #         }}
+        #         .content {{
+        #             background-color: white;
+        #             padding: 30px;
+        #             border-radius: 8px;
+        #             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        #         }}
+        #         .button {{
+        #             display: inline-block;
+        #             padding: 12px 30px;
+        #             margin: 20px 0;
+        #             background-color: #667eea;
+        #             color: white;
+        #             text-decoration: none;
+        #             border-radius: 8px;
+        #             font-weight: bold;
+        #         }}
+        #         .footer {{
+        #             margin-top: 20px;
+        #             text-align: center;
+        #             color: #666;
+        #             font-size: 12px;
+        #         }}
+        #     </style>
+        # </head>
+        # <body>
+        #     <div class="container">
+        #         <div class="content">
+        #             <h2>Welcome! Please Activate Your Account</h2>
+        #             <p>Thank you for creating an account. To get started, please activate your account by clicking the button below:</p>
+        #             <a href="{activation_link}" class="button">Activate Account</a>
+        #             <p>Or copy and paste this link into your browser:</p>
+        #             <p style="word-break: break-all; color: #667eea;">{activation_link}</p>
+        #             <p>This link will expire in 24 hours.</p>
+        #             <p>If you didn't create this account, please ignore this email.</p>
+        #         </div>
+        #         <div class="footer">
+        #             <p>This is an automated email. Please do not reply.</p>
+        #         </div>
+        #     </div>
+        # </body>
+        # </html>
+        # """
         
         # For development, just print to console
         # print(f"\n{'='*60}")
@@ -1096,70 +1235,385 @@ class BackEndUtils:
         # print(f"{'='*60}\n")
         
         # Uncomment below to actually send emails in production
-        
-        try:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = SMTP_USERNAME
-            msg['To'] = email
-            
-            html_part = MIMEText(html_body, 'html')
-            msg.attach(html_part)
-            
-            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-            server.starttls()
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
-            server.quit()
-            
-            print(f"Activation email sent successfully to {email}")
-        except Exception as e:
-            print(f"Failed to send activation email: {str(e)}")
-    
-    def send_feedback_email_notification(feedback: str, user_uuid: uuid.UUID):
-        """Send feedback email notification to admin"""
-        msg = EmailMessage()
-        msg.set_content(f"New user feedback received from {user_uuid}:\n\n{feedback}")
-        msg['Subject'] = f'New User Feedback - {user_uuid}'
-        msg['From'] = MY_EMAIL
-        msg['To'] = MY_EMAIL
-        print("Connecting to SMTP server for feedback notification...")
-        with smtplib.SMTP('smtp.gmail.com', port=587) as s:
-            s.starttls()
-            s.login(MY_EMAIL, MY_APP_PASSWORD)
-            print("Sending feedback notification email...")
-            s.send_message(msg)
-            print("Feedback notification email sent.")
 
-    def send_contact_us_email_notification(message: str, user_uuid: uuid.UUID, email: str):
+            # msg = MIMEMultipart('alternative')
+            # msg['Subject'] = subject
+            # msg['From'] = SMTP_USERNAME
+            # msg['To'] = email
+            
+            # html_part = MIMEText(html_body, 'html')
+            # msg.attach(html_part)
+            
+            # server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            # server.starttls()
+            # server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            # server.send_message(msg)
+            # server.quit()
+           
+    def send_feedback_email_notification(feedback: str, email: str, feedback_type: str, feedback_subject: str):
+        """Send feedback email notification to admin"""
+        resend.Emails.send(from_email=MY_EMAIL, 
+                                            to=MY_EMAIL, 
+                                            subject=f"Feedback - {feedback_subject} - {feedback_type} - {email}",
+                                            html=f"""<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }}
+        .content {{
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            border-top: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }}
+        .field-label {{
+            font-weight: bold;
+            color: #667eea;
+            text-transform: uppercase;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }}
+        .field-value {{
+            margin-bottom: 20px;
+            background: #fdfdfd;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #f0f0f0;
+        }}
+        .feedback-text {{
+            white-space: pre-wrap;
+            font-style: italic;
+            color: #444;
+        }}
+        .footer {{
+            margin-top: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+        }}
+        .badge {{
+            display: inline-block;
+            padding: 2px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <div class="header">
+                <h2 style="margin-top: 0;">New Feedback Received</h2>
+                <p>A user has submitted feedback via the automated system.</p>
+            </div>
+
+            <div class="field-label">Subject</div>
+            <div class="field-value"><strong>{feedback_subject}</strong></div>
+
+            <div class="field-label">Type</div>
+            <div class="field-value"><span class="badge">{feedback_type}</span></div>
+
+            <div class="field-label">From</div>
+            <div class="field-value">{email}</div>
+
+            <div class="field-label">Message</div>
+            <div class="field-value feedback-text">"{feedback}"</div>
+
+        </div>
+        <div class="footer">
+            <p>System Notification | Generated on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+            <p>This is an automated email. Please do not reply directly to this notification.</p>
+        </div>
+    </div>
+</body>
+</html>""")
+ 
+        # msg = EmailMessage()
+        # msg.set_content(f"New user feedback received from {user_uuid}:\n\n{feedback}")
+        # msg['Subject'] = f'New User Feedback - {user_uuid}'
+        # msg['From'] = MY_EMAIL
+        # msg['To'] = MY_EMAIL
+        # print("Connecting to SMTP server for feedback notification...")
+        # with smtplib.SMTP('smtp.gmail.com', port=587) as s:
+        #     s.starttls()
+        #     s.login(MY_EMAIL, MY_APP_PASSWORD)
+        #     print("Sending feedback notification email...")
+        #     s.send_message(msg)
+        #     print("Feedback notification email sent.")
+
+    def send_contact_us_email_notification(message: str, email: str, issue_type: str, priority, subject: str, ticket_id: str):
         """Send contact us email notification to admin"""
-        msg = EmailMessage()
-        msg.set_content(f"New contact us message received from {user_uuid} ({email}):\n\n{message}")
-        msg['Subject'] = f'New Contact Us Message - {user_uuid}'
-        msg['From'] = MY_EMAIL
-        msg['To'] = MY_EMAIL
-        print("Connecting to SMTP server for contact us notification...")
-        with smtplib.SMTP('smtp.gmail.com', port=587) as s:
-            s.starttls()
-            s.login(MY_EMAIL, MY_APP_PASSWORD)
-            print("Sending contact us notification email...")
-            s.send_message(msg)
-            print("Contact us notification email sent.")
+        resend.Emails.send(from_email=MY_EMAIL, 
+                                            to=MY_EMAIL, 
+                                            subject=f"Issue {priority} - {subject} - {issue_type} - {email}",
+                                            html=f"""<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }}
+        .content {{
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }}
+        .header {{
+            border-bottom: 2px solid #eee;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }}
+        .header h2 {{
+            color: #1a1a1a;
+            margin: 0;
+            font-size: 22px;
+        }}
+        .meta-table {{
+            width: 100%;
+            margin-bottom: 25px;
+            border-collapse: collapse;
+        }}
+        .meta-table td {{
+            padding: 8px 0;
+            vertical-align: top;
+        }}
+        .label {{
+            font-weight: bold;
+            color: #777;
+            width: 120px;
+            font-size: 13px;
+            text-transform: uppercase;
+        }}
+        .value {{
+            color: #333;
+            font-size: 15px;
+        }}
+        .priority-tag {{
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            background-color: #e2e8f0;
+        }}
+        /* Optional: You can handle dynamic priority colors in your backend logic */
+        .message-box {{
+            background-color: #f8fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }}
+        .footer {{
+            margin-top: 25px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <div class="header">
+                <h2>📩 New Contact Inquiry</h2>
+            </div>
+
+            <table class="meta-table">
+                <tr>
+                    <td class="label">Subject:</td>
+                    <td class="value"><strong>{subject}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label">Priority:</td>
+                    <td class="value">
+                        <span class="priority-tag">{priority}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label">Issue Type:</td>
+                    <td class="value">{issue_type}</td>
+                </tr>
+                <tr>
+                    <td class="label">From:</td>
+                    <td class="value"><a href="mailto:{email}" style="color: #667eea; text-decoration: none;">{email}</a></td>
+                </tr>
+            </table>
+
+            <div class="label" style="margin-bottom: 10px;">Message Contents:</div>
+            <div class="message-box">
+                <p style="margin: 0; white-space: pre-wrap;">{message}</p>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center;">
+                <a href="mailto:{email}?subject=Re: {subject}" 
+                   style="background-color: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                   Reply to User
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Sent via Website Contact Form</p>
+            <p>Internal Tracking ID: {ticket_id}</p>
+            <p>This is an automated email. Please do not reply</p>
+        </div>
+    </div>
+</body>
+</html>""")
+
+    #     msg = EmailMessage()
+    #     msg.set_content(f"New contact us message received from {user_uuid} ({email}):\n\n{message}")
+    #     msg['Subject'] = f'New Contact Us Message - {user_uuid}'
+    #     msg['From'] = MY_EMAIL
+    #     msg['To'] = MY_EMAIL
+    #     print("Connecting to SMTP server for contact us notification...")
+    #     with smtplib.SMTP('smtp.gmail.com', port=587) as s:
+    #         s.starttls()
+    #         s.login(MY_EMAIL, MY_APP_PASSWORD)
+    #         print("Sending contact us notification email...")
+    #         s.send_message(msg)
+    #         print("Contact us notification email sent.")
     
-    def send_contact_us_email_acknowledgement(message: str, email: str):
+    def send_contact_us_email_acknowledgement(message: str, email: str, issue_type: str, subject: str, priority: str, ticket_id: str):
         """Send contact us email acknowledgement to user"""
-        msg = EmailMessage()
-        msg.set_content(f"Thank you for contacting us. We have received your message:\n\n{message}\n\nWe will get back to you shortly.")
-        msg['Subject'] = 'Contact Us Acknowledgement'
-        msg['From'] = MY_EMAIL
-        msg['To'] = email
-        print("Connecting to SMTP server for contact us acknowledgement...")
-        with smtplib.SMTP('smtp.gmail.com', port=587) as s:
-            s.starttls()
-            s.login(MY_EMAIL, MY_APP_PASSWORD)
-            print("Sending contact us acknowledgement email...")
-            s.send_message(msg)
-            print("Contact us acknowledgement email sent.")
+        resend.Emails.send(from_email=MY_EMAIL, 
+                                            to=email, 
+                                            subject="We Received Your Message - Team Picker",
+                                            html=f"""<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }}
+        .content {{
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            text-align: center;
+        }}
+        .icon {{
+            font-size: 48px;
+            margin-bottom: 20px;
+        }}
+        .header h2 {{
+            color: #2d3748;
+            margin-bottom: 10px;
+        }}
+        .details-box {{
+            text-align: left;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            border: 1px solid #e2e8f0;
+        }}
+        .details-title {{
+            font-weight: bold;
+            font-size: 14px;
+            color: #667eea;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }}
+        .footer {{
+            margin-top: 25px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+        }}
+        .divider {{
+            height: 1px;
+            background-color: #e2e8f0;
+            margin: 20px 0;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <div class="icon">📨</div>
+            <div class="header">
+                <h2>We've Received Your Message</h2>
+                <p>Hi there! Thanks for reaching out. This is a quick note to let you know that your message has landed safely in our inbox.</p>
+            </div>
+
+            <div class="details-box">
+                <span class="details-title">Submission Summary</span>
+                <p style="margin: 5px 0;"><strong>Subject:</strong> {subject}</p>
+                <p style="margin: 5px 0;"><strong>Issue Type:</strong> {issue_type}</p>
+                <p style="margin: 5px 0;"><strong>Priority:</strong> {priority}</p>
+                <div class="divider"></div>
+                <p style="margin: 0; font-style: italic; color: #4a5568;">"{message}"</p>
+            </div>
+
+            <p>Our team is currently reviewing your inquiry. You can generally expect a response within **24-48 business hours**.</p>
+            
+            <p style="font-size: 14px; color: #718096;">Your Reference ID: <strong>#{ticket_id}</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2026 Your Company Name. All rights reserved.</p>
+            <p>If you didn't send a message to us, please disregard this email.</p>
+        </div>
+    </div>
+</body>
+</html>""")
+        # msg = EmailMessage()
+        # msg.set_content(f"Thank you for contacting us. We have received your message:\n\n{message}\n\nWe will get back to you shortly.")
+        # msg['Subject'] = 'Contact Us Acknowledgement'
+        # msg['From'] = MY_EMAIL
+        # msg['To'] = email
+        # print("Connecting to SMTP server for contact us acknowledgement...")
+        # with smtplib.SMTP('smtp.gmail.com', port=587) as s:
+        #     s.starttls()
+        #     s.login(MY_EMAIL, MY_APP_PASSWORD)
+        #     print("Sending contact us acknowledgement email...")
+        #     s.send_message(msg)
+        #     print("Contact us acknowledgement email sent.")
 
     def balance_teams(list_of_player_names: list, email: str):
         all_players = DBUtils.retrieve_user_players(email)

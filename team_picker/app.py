@@ -55,9 +55,6 @@ def create_account():
             # Generate activation token
             activation_token = secrets.token_urlsafe(32)
             
-            # Add user to database with is_active=False
-            DBUtils.add_new_user_to_db(username, email, password)
-            
             # Store activation token in database
             # user_uuid = DBUtils.get_user_uuid(email=email, database_name="testing")
             DBUtils.put_activation_token_in_db(email, activation_token)
@@ -65,6 +62,9 @@ def create_account():
             # Send activation email
             activation_link = f"https://team-picker-e3k0.onrender.com/activate_account?token={activation_token}"
             BackEndUtils.send_activation_email(email, activation_link)
+
+            # Add user to database with is_active=False
+            DBUtils.add_new_user_to_db(username, email, password)
 
             return jsonify({
                 "message": "Account created! Please check your email to activate your account.",
@@ -237,8 +237,8 @@ def request_password_reset():
         else:
             if DBUtils.check_database_for_email(email, database_name="testing"):
                 token = secrets.token_urlsafe(32)
-                DBUtils.put_password_reset_token_in_db(DBUtils.get_user_uuid(email=email, database_name="testing"), email, token, database_name="testing")
-                reset_link = f"http://localhost:5000/reset_password?token={token}"
+                DBUtils.put_password_reset_token_in_db(email, token)
+                reset_link = f"https://team-picker-e3k0.onrender.com/reset_password?token={token}"
                 print(f"Password reset link for {email}: {reset_link}")
                 BackEndUtils.send_password_reset_email(email, reset_link)
             return jsonify({
@@ -280,7 +280,7 @@ def reset_password_page():
     # data = request.get_json()
     # email = data.get('email', '').strip().lower()
     try:
-        valid_tokens = DBUtils.get_password_reset_tokens(database_name="testing")
+        valid_tokens = DBUtils.get_password_reset_tokens()
         print(f"Valid tokens from DB: {valid_tokens}")
         if not token or token not in valid_tokens:
             return render_template_string(INVALID_EXPIRED_RESET_TOKEN_HTML)
@@ -352,7 +352,7 @@ def submit_password_reset():
 #         put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
         
 #         # Send activation email
-#         activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
+#         activation_link = f"https://team-picker-e3k0.onrender.com/activate_account?token={activation_token}"
 #         send_activation_email(email, activation_link)
         
 #         return jsonify({
@@ -422,7 +422,7 @@ def resend_activation():
         DBUtils.put_activation_token_in_db(user_uuid, email, activation_token, database_name="testing")
 
         # Send activation email
-        activation_link = f"http://localhost:5000/activate_account?token={activation_token}"
+        activation_link = f"https://team-picker-e3k0.onrender.com/activate_account?token={activation_token}"
         BackEndUtils.send_activation_email(email, activation_link)
 
         return jsonify({
@@ -438,12 +438,14 @@ def submit_feedback():
     data = request.get_json()
     email = data.get('email', '')
     feedback_text = data.get('message', '')
+    feedback_type = data.get('feedback_type', 'General')
+    feedback_subject = data.get('subject', 'No Subject')
 
     try:
         # Here you would typically store the feedback in a database or send it via email
         print(f"Feedback received from {email}: {feedback_text}")
-        DBUtils.store_user_feedback_in_db(email=email, feedback=feedback_text, database_name="testing")
-        BackEndUtils.send_feedback_email_notification(feedback_text, user_uuid=DBUtils.get_user_uuid(email=email, database_name="testing"))
+        DBUtils.store_user_feedback_in_db(email=email, feedback=feedback_text, feedback_type=feedback_type, feedback_subject=feedback_subject)
+        BackEndUtils.send_feedback_email_notification(feedback_text, email, feedback_type, feedback_subject)
 
         return jsonify({"message": "Thank you for your feedback!", "status": 200})
     except Exception as e:
@@ -455,14 +457,16 @@ def contact_us():
     data = request.get_json()
     email = data.get('email', '')
     message = data.get('description', '')
+    issue_type = data.get('issue_type', 'General Inquiry')
+    issue_subject = data.get('subject', 'No Subject')
+    issue_priority = data.get('priority', 'Normal')
 
     try:
         # Here you would typically store the message in a database or send it via email
         print(f"Contact message received from {email}: {message}")
-        ticket_id = DBUtils.store_contact_us_message(email=email, message=message, database_name="testing")
-        BackEndUtils.send_contact_us_email_notification(message, user_uuid=DBUtils.get_user_uuid(email=email, database_name="testing"), email=email)
-        BackEndUtils.send_contact_us_email_acknowledgement(message, email=email)
-        print("yes")
+        ticket_id = DBUtils.store_contact_us_message(email=email, message=message, issue_type=issue_type, issue_subject=issue_subject, issue_priority=issue_priority)
+        BackEndUtils.send_contact_us_email_notification(message, email=email, ticket_id=ticket_id, issue_type=issue_type, issue_subject=issue_subject, issue_priority=issue_priority)
+        BackEndUtils.send_contact_us_email_acknowledgement(message, email=email, issue_type=issue_type, subject=issue_subject, priority=issue_priority, ticket_id=ticket_id)
         return jsonify({"message": "Thank you for contacting us! We will get back to you shortly.", "status": 200, "ticket_id": ticket_id})
     except Exception as e:
         print(f"Error during contact us submission: {e}")
