@@ -866,13 +866,13 @@ class DBUtils:
         
         return row[0] if row else None
 
-    def activate_user_account(email: str):
-        """Set user account as active"""
-        connection = sqlalchemy_engine.connect()
-        query = f"UPDATE users SET is_active = 1, activated_at = %s WHERE email = %s"
-        with connection as conn:
-            conn.execute(sqlalchemy.text(query), (datetime.datetime.now(), email))
-            conn.commit()
+    # def activate_user_account(email: str):
+    #     """Set user account as active"""
+    #     connection = sqlalchemy_engine.connect()
+    #     query = f"UPDATE users SET is_active = 1, activated_at = %s WHERE email = %s"
+    #     with connection as conn:
+    #         conn.execute(sqlalchemy.text(query), (datetime.datetime.now(), email))
+    #         conn.commit()
 
     def delete_activation_token(token: str):
         """Remove activation token after use"""
