@@ -19,7 +19,8 @@ app.secret_key = 'your-secret-key-here-change-in-production'  # Required for ses
 def home():
     user = request.cookies.get('user', None)
     response = make_response(render_template_string(NEW_HOME_HTML, user=user))
-    response.set_cookie('email', DBUtils.get_user_email_from_username(user), max_age=60*60*24*7)
+    if user:
+        response.set_cookie('email', DBUtils.get_user_email_from_username(user), max_age=60*60*24*7)
     return response
 
 @app.route('/pick_team_logged_in')
