@@ -176,7 +176,7 @@ def autoselect():
         players = DBUtils.autoselect_players_from_db(email=created_by, number_of_players=n)
         print(players)
     except Exception as e:
-        print(f"Error during player selection: {e}")
+        print(f"Error during player selection: {e}. Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
         return jsonify({"error": "An error occurred during player selection.", "status": 500})
     # Mock implementation - replace with actual logic
     # This should fetch players and select them based on some algorithm
