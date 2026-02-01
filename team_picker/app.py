@@ -131,7 +131,7 @@ def add_player():
         player_check = DBUtils.check_if_player_in_db(player_name)
         if player_check is True:
             DBUtils.add_new_player_with_stats_to_db(
-                created_by=user_email, 
+                email=user_email,
                 player_name=player_name, 
                 number_of_games=number_of_games, 
                 wins=wins, 
