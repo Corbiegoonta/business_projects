@@ -113,7 +113,7 @@ class Tables:
     def __init__(self):
         pass
 
-    def create_matches_table(database_name: str="postgres"):
+    def create_matches_table():
         """Create the matches table in the specified database if it doesn't exist. The following columns are included:
         - match_id (UUID, primary key)
         - team_1 (String)
@@ -153,7 +153,7 @@ class Tables:
         else:
             print("Error: Table 'matches' already exists.")
 
-    def create_players_table(database_name: str="postgres"):
+    def create_players_table():
         """Create the players table in the specified database if it doesn't exist. The following columns are included:
         - player_id (UUID, primary key)
         - player_name (String)
@@ -179,9 +179,9 @@ class Tables:
                 sqlalchemy.Column('losses', sqlalchemy.Integer),
                 sqlalchemy.Column('draws', sqlalchemy.Integer),
                 sqlalchemy.Column('points', sqlalchemy.Integer, Computed("ROUND((wins * 3) + draws, 0)", persisted=True)),
-                sqlalchemy.Column('win_rate', sqlalchemy.Float, Computed("ROUND(CAST(wins AS NUMERIC) / NULLIF(number_of_games, 0), 3)", persisted=True)),
-                sqlalchemy.Column('points_win_rate', sqlalchemy.Float, Computed("ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games * 3, 0), 3)", persisted=True)),
-                sqlalchemy.Column('points_per_game', sqlalchemy.Float, Computed("ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games, 0), 3)", persisted=True)),
+                sqlalchemy.Column('win_rate', sqlalchemy.Float, Computed("COALESCE(ROUND(CAST(wins AS NUMERIC) / NULLIF(number_of_games, 0), 3), 0)", persisted=True)),
+                sqlalchemy.Column('points_win_rate', sqlalchemy.Float, Computed("COALESCE(ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games * 3, 0), 3), 0)", persisted=True)),
+                sqlalchemy.Column('points_per_game', sqlalchemy.Float, Computed("COALESCE(ROUND(CAST(ROUND((wins * 3) + draws, 0) AS NUMERIC) / NULLIF(number_of_games, 0), 3), 0)", persisted=True)),
                 sqlalchemy.Column('created_by', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('updated_by', sqlalchemy.String, foreign_key=True),
                 sqlalchemy.Column('created_datetime', sqlalchemy.DateTime, default=datetime.datetime.now()),
@@ -709,7 +709,7 @@ class DBUtils:
             if result.fetchone() != None:
                 # print(result.fetchone().tuple())
                 # print(type(result.fetchone().tuple()))
-                return result.fetchone()
+                return result.fetchone()[0]
             else:
                 return f"There is no email associated with the username {username}."
             
