@@ -706,7 +706,7 @@ class DBUtils:
         query = f"SELECT email FROM users WHERE username = :username;"
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query), {"username": username})
-            if result.fetchone() != None:
+            if result.fetchone() is not None:
                 # print(result.fetchone().tuple())
                 # print(type(result.fetchone().tuple()))
                 return result.fetchone()[0]

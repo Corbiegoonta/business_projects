@@ -1789,7 +1789,7 @@ function renderPlayers(){
         div.dataset.source = 'pool';
         div.innerHTML = `
             <strong>${escapeHtml(p.name)}</strong>
-            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PWR:${p.points_win_rate || 0} | Games:${p.number_of_games || 0}</div>
+            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PWR:${p.points_win_rate} | Games:${p.number_of_games || 0}</div>
         `;
         div.addEventListener('dragstart', dragStart);
         div.addEventListener('dragend', dragEnd);
@@ -1846,7 +1846,7 @@ function renderTeam(teamId, teamArray, slotsCount){
             slot.innerHTML = `
                 <div class="slot-content" draggable="true" data-player-name="${player.name}" data-source="${teamId}">
                     <strong>${escapeHtml(player.name)}</strong>
-                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PWR:${player.points_win_rate || 0} | Games:${player.number_of_games || 0}</div>
+                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PWR:${player.points_win_rate} | Games:${player.number_of_games || 0}</div>
                 </div>
             `;
             const content = slot.querySelector('.slot-content');
