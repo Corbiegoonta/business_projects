@@ -668,6 +668,7 @@ class DBUtils:
             p["draws"] = int(df.at[row, "draws"])
             p["losses"] = int(df.at[row, "losses"])
             p["number_of_games"] = int(df.at[row, "number_of_games"])
+            p["points_win_rate"] = float(df.at[row, "points_win_rate"])
             player_pool.append(p)
 
         chosen_players = random.sample(player_pool, min(number_of_players, len(player_pool)))
