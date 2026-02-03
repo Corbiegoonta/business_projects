@@ -1766,6 +1766,7 @@ class BackEndUtils:
             p["draws"] = int(row["draws"].values[0])
             p["losses"] = int(row["losses"].values[0])
             p["number_of_games"] = int(row["number_of_games"].values[0])
+            p["points_win_rate"] = float(row["points_win_rate"].values[0])
             teama.append(p)
         for name in opp:
             row = all_players[all_players['player_name'] == name]
@@ -1777,6 +1778,7 @@ class BackEndUtils:
             p["draws"] = int(row["draws"].values[0])
             p["losses"] = int(row["losses"].values[0])
             p["number_of_games"] = int(row["number_of_games"].values[0])
+            p["points_win_rate"] = float(row["points_win_rate"].values[0])
             teamb.append(p)
         print("Final Teams:")
         print(teama)
