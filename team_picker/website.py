@@ -1166,7 +1166,7 @@ function renderPlayers(){
         div.dataset.source = 'pool';
         div.innerHTML = `
             <strong>${escapeHtml(p.name)}</strong>
-            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} NOG:${p.number_of_games} PR:${(p.points_win_rate * 100).toFixed(2)}%</div>
+            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} NOG:${p.number_of_games} PR:${(p.points_win_rate * 100).toFixed(0)}%</div>
         `;
         div.addEventListener('dragstart', dragStart);
         div.addEventListener('dragend', dragEnd);
@@ -1203,7 +1203,7 @@ function renderTeam(teamId, teamArray, slotsCount){
             slot.innerHTML = `
                 <div class="slot-content" draggable="true" data-player-name="${player.name}" data-source="${teamId}">
                     <strong>${escapeHtml(player.name)}</strong>
-                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PR:${(player.points_win_rate * 100).toFixed(2)}%</div>
+                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PR:${(player.points_win_rate * 100).toFixed(0)}%</div>
                 </div>
             `;
             const content = slot.querySelector('.slot-content');
@@ -1356,7 +1356,7 @@ async function submitAddPlayer(){
     const draws = parseInt(document.getElementById('p_draws').value) || 0;
     const losses = parseInt(document.getElementById('p_losses').value) || 0;
     const number_of_games = wins + draws + losses;
-    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / number_of_games).toFixed(3) : 0;
+    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(3) : 0;
     
     if (!name){ 
         alert('Name is required'); 
@@ -1790,7 +1790,7 @@ function renderPlayers(){
         div.dataset.source = 'pool';
         div.innerHTML = `
             <strong>${escapeHtml(p.name)}</strong>
-            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PR:${(p.points_win_rate * 100).toFixed(2)}% | Games:${p.number_of_games || 0}</div>
+            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PR:${(p.points_win_rate * 100).toFixed(0)}% | Games:${p.number_of_games || 0}</div>
         `;
         div.addEventListener('dragstart', dragStart);
         div.addEventListener('dragend', dragEnd);
@@ -1847,7 +1847,7 @@ function renderTeam(teamId, teamArray, slotsCount){
             slot.innerHTML = `
                 <div class="slot-content" draggable="true" data-player-name="${player.name}" data-source="${teamId}">
                     <strong>${escapeHtml(player.name)}</strong>
-                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PR:${(player.points_win_rate * 100).toFixed(2)}% | Games:${player.number_of_games || 0}</div>
+                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PR:${(player.points_win_rate * 100).toFixed(0)}% | Games:${player.number_of_games || 0}</div>
                 </div>
             `;
             const content = slot.querySelector('.slot-content');
