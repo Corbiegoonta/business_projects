@@ -1166,7 +1166,7 @@ function renderPlayers(){
         div.dataset.source = 'pool';
         div.innerHTML = `
             <strong>${escapeHtml(p.name)}</strong>
-            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} NOG:${p.number_of_games} PWR:${p.points_win_rate}</div>
+            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} NOG:${p.number_of_games} PPG:${p.points_win_rate}</div>
         `;
         div.addEventListener('dragstart', dragStart);
         div.addEventListener('dragend', dragEnd);
@@ -1203,7 +1203,7 @@ function renderTeam(teamId, teamArray, slotsCount){
             slot.innerHTML = `
                 <div class="slot-content" draggable="true" data-player-name="${player.name}" data-source="${teamId}">
                     <strong>${escapeHtml(player.name)}</strong>
-                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses}</div>
+                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PPG:${player.points_win_rate}</div>
                 </div>
             `;
             const content = slot.querySelector('.slot-content');
@@ -1356,6 +1356,7 @@ async function submitAddPlayer(){
     const draws = parseInt(document.getElementById('p_draws').value) || 0;
     const losses = parseInt(document.getElementById('p_losses').value) || 0;
     const number_of_games = wins + draws + losses;
+    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / number_of_games).toFixed(3) : 0;
     
     if (!name){ 
         alert('Name is required'); 
@@ -1369,7 +1370,7 @@ async function submitAddPlayer(){
     }
     
     // Add player directly to local array (no API call)
-    players.push({name, wins, draws, losses, number_of_games});
+    players.push({name, wins, draws, losses, number_of_games, points_win_rate});
     
     renderPlayers();
     closeAddPlayer();
@@ -1789,7 +1790,7 @@ function renderPlayers(){
         div.dataset.source = 'pool';
         div.innerHTML = `
             <strong>${escapeHtml(p.name)}</strong>
-            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PWR:${p.points_win_rate} | Games:${p.number_of_games || 0}</div>
+            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PPG:${p.points_win_rate} | Games:${p.number_of_games || 0}</div>
         `;
         div.addEventListener('dragstart', dragStart);
         div.addEventListener('dragend', dragEnd);
@@ -1846,7 +1847,7 @@ function renderTeam(teamId, teamArray, slotsCount){
             slot.innerHTML = `
                 <div class="slot-content" draggable="true" data-player-name="${player.name}" data-source="${teamId}">
                     <strong>${escapeHtml(player.name)}</strong>
-                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PWR:${player.points_win_rate} | Games:${player.number_of_games || 0}</div>
+                    <div class="stats">W:${player.wins} D:${player.draws} L:${player.losses} PPG:${player.points_win_rate} | Games:${player.number_of_games || 0}</div>
                 </div>
             `;
             const content = slot.querySelector('.slot-content');
@@ -1995,6 +1996,7 @@ async function submitAddPlayer(){
     const draws = parseInt(document.getElementById('p_draws').value) || 0;
     const losses = parseInt(document.getElementById('p_losses').value) || 0;
     const number_of_games = wins + draws + losses;
+    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / number_of_games).toFixed(3) : 0;
     
     if (!name){ alert('Name is required'); return; }
     
@@ -2002,7 +2004,7 @@ async function submitAddPlayer(){
         const resp = await fetch('/add_player', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({name, wins, draws, losses, number_of_games})
+            body:JSON.stringify({name, wins, draws, losses, number_of_games, points_win_rate})
         });
         const data = await resp.json();
         
@@ -2011,7 +2013,7 @@ async function submitAddPlayer(){
             return; 
         }
         
-        players.push({name, wins, draws, losses, number_of_games});
+        players.push({name, wins, draws, losses, number_of_games, points_win_rate});
         renderPlayers();
         closeAddPlayer();
         alert('Player added successfully!');
