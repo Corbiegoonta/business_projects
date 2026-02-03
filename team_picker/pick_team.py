@@ -1778,6 +1778,9 @@ class BackEndUtils:
             p["losses"] = int(row["losses"])
             p["number_of_games"] = int(row["number_of_games"])
             teamb.append(p)
+        print("Final Teams:")
+        print(teama)
+        print(teamb)
         return teama, teamb, np.mean(team_1_rating), np.mean(team_2_rating), total_average_win_rate
 
     def process_match_day():

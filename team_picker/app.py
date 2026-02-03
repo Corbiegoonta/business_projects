@@ -206,7 +206,7 @@ def balance_the_teams():
         # return jsonify({"message": "Teams balanced successfully"})
             return jsonify({"teamA": teams[0], "teamB": teams[1]})
     except Exception as e:
-        print(f"Error balancing teams: {e}")
+        print(f"Error balancing teams: {e} . Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
         return jsonify({"error": "An error occurred while balancing teams."}), 500
 
 @app.route('/delete_account', methods=['POST'])
