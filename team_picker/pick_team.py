@@ -1762,10 +1762,10 @@ class BackEndUtils:
             p = {}
             # print(type(df["player_name"].iloc[row]))
             p["name"] = name
-            p["wins"] = int(row["wins"])
-            p["draws"] = int(row["draws"])
-            p["losses"] = int(row["losses"])
-            p["number_of_games"] = int(row["number_of_games"])
+            p["wins"] = int(row["wins"].values[0])
+            p["draws"] = int(row["draws"].values[0])
+            p["losses"] = int(row["losses"].values[0])
+            p["number_of_games"] = int(row["number_of_games"].values[0])
             teama.append(p)
         for name in opp:
             row = all_players[all_players['player_name'] == name]
@@ -1773,10 +1773,10 @@ class BackEndUtils:
             p = {}
             # print(type(df["player_name"].iloc[row]))
             p["name"] = name
-            p["wins"] = int(row["wins"])
-            p["draws"] = int(row["draws"])
-            p["losses"] = int(row["losses"])
-            p["number_of_games"] = int(row["number_of_games"])
+            p["wins"] = int(row["wins"].values[0])
+            p["draws"] = int(row["draws"].values[0])
+            p["losses"] = int(row["losses"].values[0])
+            p["number_of_games"] = int(row["number_of_games"].values[0])
             teamb.append(p)
         print("Final Teams:")
         print(teama)
