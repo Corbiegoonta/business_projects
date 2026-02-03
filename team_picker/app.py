@@ -474,7 +474,7 @@ def contact_us():
         BackEndUtils.send_contact_us_email_acknowledgement(message, email=email, issue_type=issue_type, subject=issue_subject, priority=issue_priority, ticket_id=ticket_id)
         return jsonify({"message": "Thank you for contacting us! We will get back to you shortly.", "status": 200, "ticket_id": ticket_id})
     except Exception as e:
-        print(f"Error during contact us submission: {e}")
+        print(f"Error during contact us submission: {e} Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
         return jsonify({"error": "An error occurred while submitting your message.", "status": 500})
 
 # Update the login route to check if account is activated
