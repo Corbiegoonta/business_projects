@@ -1356,7 +1356,7 @@ async function submitAddPlayer(){
     const draws = parseInt(document.getElementById('p_draws').value) || 0;
     const losses = parseInt(document.getElementById('p_losses').value) || 0;
     const number_of_games = wins + draws + losses;
-    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(3) : 0;
+    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(0) : 0;
     
     if (!name){ 
         alert('Name is required'); 
@@ -1996,7 +1996,7 @@ async function submitAddPlayer(){
     const draws = parseInt(document.getElementById('p_draws').value) || 0;
     const losses = parseInt(document.getElementById('p_losses').value) || 0;
     const number_of_games = wins + draws + losses;
-    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(3) : 0;
+    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(0) : 0;
     
     if (!name){ alert('Name is required'); return; }
     
