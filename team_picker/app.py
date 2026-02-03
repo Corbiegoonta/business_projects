@@ -470,7 +470,7 @@ def contact_us():
         # Here you would typically store the message in a database or send it via email
         print(f"Contact message received from {email}: {message}")
         ticket_id = DBUtils.store_contact_us_message(email=email, message=message, issue_type=issue_type, issue_subject=issue_subject, issue_priority=issue_priority)
-        BackEndUtils.send_contact_us_email_notification(message, email=email, ticket_id=ticket_id, issue_type=issue_type, issue_subject=issue_subject, issue_priority=issue_priority)
+        BackEndUtils.send_contact_us_email_notification(message, email=email, ticket_id=ticket_id, issue_type=issue_type, subject=issue_subject, priority=issue_priority)
         BackEndUtils.send_contact_us_email_acknowledgement(message, email=email, issue_type=issue_type, subject=issue_subject, priority=issue_priority, ticket_id=ticket_id)
         return jsonify({"message": "Thank you for contacting us! We will get back to you shortly.", "status": 200, "ticket_id": ticket_id})
     except Exception as e:
