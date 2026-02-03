@@ -706,12 +706,9 @@ class DBUtils:
         query = f"SELECT email FROM users WHERE username = :username;"
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query), {"username": username})
-            if type(result.fetchone()) is not type(None):
-                # print(result.fetchone().tuple())
-                # print(type(result.fetchone().tuple()))
-                return result.fetchone()[0]
-            else:
+            if result is None:
                 return f"There is no email associated with the username {username}."
+            return result.fetchone()[0]
             
     def retrieve_user_players(email: str) -> pd.DataFrame:
         """Retrieve all players from the players table in the database for a specific user and return as a pandas DataFrame."""
