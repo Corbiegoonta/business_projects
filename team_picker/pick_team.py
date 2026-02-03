@@ -649,6 +649,7 @@ class DBUtils:
             p["draws"] = int(df.at[row, "draws"])
             p["losses"] = int(df.at[row, "losses"])
             p["number_of_games"] = int(df.at[row, "number_of_games"])
+            p["point_win_rate"] = float(df.at[row, "points_win_rate"])
             player_pool.append(p)
 
         return player_pool
