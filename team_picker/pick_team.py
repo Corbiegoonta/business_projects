@@ -702,13 +702,14 @@ class DBUtils:
 
     def get_user_email_from_username(username: str) -> str | None:
         """Retrieve the user email for a given username or email from the users table in the specified database."""
-        connection = sqlalchemy_engine.connect()
-        query = f"SELECT email FROM users WHERE username = :username;"
-        with connection as conn:
-            result = conn.execute(sqlalchemy.text(query), {"username": username})
-            if result is None:
-                return f"There is no email associated with the username {username}."
-            return result.fetchone()[0]
+        if username is None or username == "":
+            return "Username cannot be empty."
+        else:
+            connection = sqlalchemy_engine.connect()
+            query = f"SELECT email FROM users WHERE username = :username;"
+            with connection as conn:
+                result = conn.execute(sqlalchemy.text(query), {"username": username})
+                return result.fetchone()[0]
             
     def retrieve_user_players(email: str) -> pd.DataFrame:
         """Retrieve all players from the players table in the database for a specific user and return as a pandas DataFrame."""
