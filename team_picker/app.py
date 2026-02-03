@@ -454,7 +454,7 @@ def submit_feedback():
 
         return jsonify({"message": "Thank you for your feedback!", "status": 200})
     except Exception as e:
-        print(f"Error during feedback submission: {e}")
+        print(f"Error during feedback submission: {e} Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
         return jsonify({"error": "An error occurred while submitting feedback.", "status": 500})
 
 @app.route('/contact_us', methods=['POST'])
