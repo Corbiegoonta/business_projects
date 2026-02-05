@@ -653,7 +653,37 @@ class DBUtils:
             player_pool.append(p)
 
         return player_pool
-    
+
+    def update_player_in_db(original_name: str, new_name: str, wins: int | None, losses: int | None, draws: int | None):
+        """Update a player's stats in the players table in the specified database."""
+        connection = sqlalchemy_engine.connect()
+        stmt = sqlalchemy.select(players_table).where(players_table.c.player_name == original_name)
+        df = pd.read_sql_query(stmt, connection)
+        initial_wins = int(df.at[0, "wins"])
+        initial_losses = int(df.at[0, "losses"])
+        initial_draws = int(df.at[0, "draws"])
+        if wins is not None:
+            if initial_wins != wins:
+                initial_wins = wins
+        if losses is not None:
+            if initial_losses != losses:
+                initial_losses = losses
+        if draws is not None:
+            if initial_draws != draws:
+                initial_draws = draws
+        new_number_of_games = wins + losses + draws
+        stmt = players_table.update().where(players_table.c.player_name == original_name).values(
+            player_name=new_name if new_name != "" else original_name,
+            number_of_games=new_number_of_games,
+            wins=initial_wins,
+            losses=initial_losses,
+            draws=initial_draws,
+            updated_datetime=datetime.datetime.now()
+        )
+        with connection as conn:
+            conn.execute(stmt)
+            conn.commit()
+
     def autoselect_players_from_db(email: str, number_of_players: int) -> list[dict]:
         """Automatically select a specified number of players from the players table in the database for a specific user and return as a list of dictionaries."""
         sel = sqlalchemy.select(players_table).where(players_table.c.created_by == email)

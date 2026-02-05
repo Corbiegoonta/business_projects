@@ -145,6 +145,37 @@ def add_player():
         print(f"Error adding player: {e}")
         return jsonify({"error": "An error occurred while adding the player.", "status": 500})
 
+@app.route('/update_player', methods=['POST'])
+def update_player():
+    data = request.get_json()
+    user_email = request.cookies.get("email")
+    original_player_name = data.get('originalName', '')
+    new_player_name = data.get('name', '')
+    wins = data.get('wins', None)
+    draws = data.get('draws', None)
+    losses = data.get('losses', None)
+
+    if not user_email:
+        return jsonify({"error": "Must be logged in to update players", "status": 401})
+
+    try:
+        player_check = DBUtils.check_if_player_in_db(original_player_name)
+        if player_check is True:
+            DBUtils.update_player_in_db(
+                email=user_email,
+                original_name=original_player_name,
+                new_name=new_player_name,
+                wins=wins,
+                draws=draws,
+                losses=losses
+            )
+            return jsonify({"message": "Player updated successfully", "status": 200})
+        else:
+            return jsonify({"error": player_check, "status": 400})
+    except Exception as e:
+        print(f"Error updating player: {e}, Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
+        return jsonify({"error": "An error occurred while updating the player.", "status": 500})
+
 @app.route('/get_players', methods=['GET'])
 def get_players():
     user_email = request.cookies.get("email")

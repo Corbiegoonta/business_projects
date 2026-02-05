@@ -1109,7 +1109,8 @@ h2, h4 { color: #333; }
 <!-- Add Player Modal -->
 <div id="addModal" class="modal">
     <div class="modal-content">
-        <h3>Add New Player</h3>
+        <h3 id="modalTitle">Add New Player</h3>
+        <input type="hidden" id="edit_original_name">
         <label>Name *</label>
         <input id="p_name" placeholder="Enter player name"/>
         <label>Wins</label>
@@ -1165,8 +1166,14 @@ function renderPlayers(){
         div.dataset.playerName = p.name;
         div.dataset.source = 'pool';
         div.innerHTML = `
-            <strong>${escapeHtml(p.name)}</strong>
-            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} NOG:${p.number_of_games} PR:${(p.points_win_rate * 100).toFixed(0)}%</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>${escapeHtml(p.name)}</strong>
+                <button onclick="openEditPlayer('${escapeHtml(p.name)}')" 
+                        style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
+                    Edit
+                </button>
+            </div>
+            <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PR:${(p.points_win_rate * 100).toFixed(0)}% | Games:${p.number_of_games || 0}</div>
         `;
         div.addEventListener('dragstart', dragStart);
         div.addEventListener('dragend', dragEnd);
@@ -1750,6 +1757,71 @@ function init(){
     fetchPlayers();
     document.getElementById('numPlayers').addEventListener('change', renderTeams);
     renderTeams();
+}
+
+// Open Modal for Editing
+function openEditPlayer(name) {
+    const p = players.find(player => player.name === name);
+    if (!p) return;
+
+    document.getElementById('modalTitle').textContent = 'Edit Player Stats';
+    document.getElementById('edit_original_name').value = p.name;
+    document.getElementById('p_name').value = p.name;
+    document.getElementById('p_wins').value = p.wins;
+    document.getElementById('p_draws').value = p.draws;
+    document.getElementById('p_losses').value = p.losses;
+    document.getElementById('submitBtn').textContent = 'Save Changes';
+    
+    document.getElementById('addModal').style.display = 'block';
+}
+
+// Reset modal when adding new
+function openAddPlayer() {
+    document.getElementById('modalTitle').textContent = 'Add New Player';
+    document.getElementById('edit_original_name').value = '';
+    document.getElementById('p_name').value = '';
+    document.getElementById('p_wins').value = '0';
+    document.getElementById('p_draws').value = '0';
+    document.getElementById('p_losses').value = '0';
+    document.getElementById('submitBtn').textContent = 'Add Player';
+    document.getElementById('addModal').style.display = 'block';
+}
+
+async function submitPlayer() {
+    const originalName = document.getElementById('edit_original_name').value;
+    const name = document.getElementById('p_name').value.trim();
+    const wins = parseInt(document.getElementById('p_wins').value) || 0;
+    const draws = parseInt(document.getElementById('p_draws').value) || 0;
+    const losses = parseInt(document.getElementById('p_losses').value) || 0;
+    
+    if (!name) { alert('Name is required'); return; }
+
+    const isEdit = originalName !== "";
+    const url = isEdit ? '/update_player' : '/add_player';
+    const payload = { 
+        name, wins, draws, losses, 
+        old_name: isEdit ? originalName : undefined 
+    };
+
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (resp.ok) {
+            // Refresh the local players list
+            await fetchPlayers(); 
+            closeAddPlayer();
+            alert(isEdit ? 'Player updated!' : 'Player added!');
+        } else {
+            const data = await resp.json();
+            alert(data.error || 'Operation failed');
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
 }
 
 async function fetchPlayers(){
