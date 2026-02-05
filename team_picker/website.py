@@ -1113,11 +1113,11 @@ h2, h4 { color: #333; }
         <label>Name *</label>
         <input id="p_name" placeholder="Enter player name"/>
         <label>Wins</label>
-        <input id="p_wins" type="number" value="0" min="0"/>
+        <input id="p_wins" type="number" value="0" step="1" min="0"/>
         <label>Draws</label>
-        <input id="p_draws" type="number" value="0" min="0"/>
+        <input id="p_draws" type="number" value="0" step="1" min="0"/>
         <label>Losses</label>
-        <input id="p_losses" type="number" value="0" min="0"/>
+        <input id="p_losses" type="number" value="0" step="1" min="0"/>
         <div class="button-group">
             <button onclick="closeAddPlayer()" class="secondary">Cancel</button>
             <button onclick="submitAddPlayer()">Add Player</button>
@@ -1358,6 +1358,12 @@ async function submitAddPlayer(){
     const number_of_games = wins + draws + losses;
     const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(0) : 0;
     
+    // 2. Validation: Check for negative numbers or NaN (Not a Number)
+    if (wins < 0 || draws < 0 || losses < 0 || isNaN(wins) || isNaN(draws) || isNaN(losses)) {
+        alert("Please enter valid whole numbers (0 or greater).");
+        return; // Stop the function here
+    }
+
     if (!name){ 
         alert('Name is required'); 
         return; 
@@ -1715,15 +1721,17 @@ h2, h4 { color: #333; }
 <!-- Add Player Modal -->
 <div id="addModal" class="modal">
     <div class="modal-content">
+        <h3 id="modalTitle">Add New Player</h3>
+        <input type="hidden" id="edit_original_name">
         <h3>Add New Player</h3>
         <label>Name *</label>
         <input id="p_name" placeholder="Enter player name"/>
         <label>Wins</label>
-        <input id="p_wins" type="number" value="0" min="0"/>
+        <input id="p_wins" type="number" value="0" step="1" min="0"/>
         <label>Draws</label>
-        <input id="p_draws" type="number" value="0" min="0"/>
+        <input id="p_draws" type="number" value="0" step="1" min="0"/>
         <label>Losses</label>
-        <input id="p_losses" type="number" value="0" min="0"/>
+        <input id="p_losses" type="number" value="0" step="1" min="0"/>
         <div class="button-group">
             <button onclick="closeAddPlayer()" class="secondary">Cancel</button>
             <button onclick="submitAddPlayer()">Add Player</button>
@@ -1771,6 +1779,8 @@ function filterPlayers() {
 function renderPlayers(){
     const list = document.getElementById('playersList');
     list.innerHTML = '';
+
+   
     
     // Get the search term
     const searchTerm = document.getElementById('playerSearch').value.toLowerCase();
@@ -1789,7 +1799,13 @@ function renderPlayers(){
         div.dataset.playerName = p.name;
         div.dataset.source = 'pool';
         div.innerHTML = `
-            <strong>${escapeHtml(p.name)}</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>${escapeHtml(p.name)}</strong>
+                <button onclick="openEditPlayer('${escapeHtml(p.name)}')" 
+                        style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
+                    Edit
+                </button>
+            </div>
             <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PR:${(p.points_win_rate * 100).toFixed(0)}% | Games:${p.number_of_games || 0}</div>
         `;
         div.addEventListener('dragstart', dragStart);
@@ -1997,6 +2013,12 @@ async function submitAddPlayer(){
     const losses = parseInt(document.getElementById('p_losses').value) || 0;
     const number_of_games = wins + draws + losses;
     const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(0) : 0;
+    
+    // 2. Validation: Check for negative numbers or NaN (Not a Number)
+    if (wins < 0 || draws < 0 || losses < 0 || isNaN(wins) || isNaN(draws) || isNaN(losses)) {
+        alert("Please enter valid whole numbers (0 or greater).");
+        return; // Stop the function here
+    }
     
     if (!name){ alert('Name is required'); return; }
     
