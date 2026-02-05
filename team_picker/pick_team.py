@@ -191,7 +191,7 @@ class Tables:
         else:
             print("Error: Table 'players' already exists.")
 
-    def create_users_table(database_name: str="postgres"):
+    def create_users_table():
         """Create the users table in the specified database if it doesn't exist. The following columns are included:
         - username (String)
         - email (String, primary key)
@@ -216,7 +216,7 @@ class Tables:
         else:
             print("Error: Table 'users' already exists.")
 
-    def create_player_log_table(database_name: str="postgres"):
+    def create_player_log_table():
         """Create the player_log table in the specified database if it doesn't exist. The following columns are included:
         - log_id (UUID, primary key)
         - match_id (UUID, foreign key)
@@ -246,7 +246,7 @@ class Tables:
         else:
             print("Error: Table 'player_log' already exists.")
 
-    def create_password_resets_table(database_name: str="postgres"):
+    def create_password_resets_table():
         """Create the password_resets table in the specified database if it doesn't exist. The following columns are included:
         - reset_id (UUID, primary key)
         - email (String, foreign key)
@@ -268,7 +268,7 @@ class Tables:
         else:
             print("Error: Table 'password_resets' already exists.")
 
-    def create_activation_tokens_table(database_name: str="postgres"):
+    def create_activation_tokens_table():
         """Create the activation_tokens table in the specified database if it doesn't exist. The following columns are included:
         - activation_id (UUID, primary key)
         - email (String, foreign key)
@@ -288,7 +288,7 @@ class Tables:
         else:
             print("Error: Table 'activation_tokens' already exists.")
 
-    def create_feedback_table(database_name: str="postgres"):
+    def create_feedback_table():
         """Create the feedback table in the specified database if it doesn't exist. The following columns are included:
         - feedback_id (Integer, primary key)
         - email (String, foreign key)
@@ -312,7 +312,7 @@ class Tables:
         else:
             print("Error: Table 'feedback' already exists.")
 
-    def create_contact_us_table(database_name: str="postgres"):
+    def create_contact_us_table():
         """Create the contact_us table in the specified database if it doesn't exist. The following columns are included:
         - contact_id (Integer, primary key)
         - email (String, foreign key)
@@ -659,7 +659,7 @@ class DBUtils:
         sel = sqlalchemy.select(players_table).where(players_table.c.created_by == email)
         connection = sqlalchemy_engine.connect()
         df = pd.read_sql_query(sel, connection)
-        df = df.sample(n=number_of_players)
+        # df = df.sample(n=number_of_players)
         player_pool = []
         for row in range(len(df)):
             p = {}
