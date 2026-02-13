@@ -397,7 +397,11 @@ button:hover {
 
     <h1>⚽ Team Picker</h1>
     <div>
-        <button onclick="location.href='/pick_team_logged_in'">Pick Team</button>
+        {% if user and user != "Guest" %}
+            <button onclick="location.href='/pick_team_not_logged_in'">Pick Team</button>
+        {% else %}
+            <button onclick="location.href='/pick_team_logged_in'">Pick Team</button>
+        {% endif %}
         <button onclick="openCreate()">Create Account</button>
         <button onclick="deleteAccount()">Delete Account</button>
         <button class="action-button feedback-btn" onclick="openFeedbackModal()">📝 Give Feedback</button>

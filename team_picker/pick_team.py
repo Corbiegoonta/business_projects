@@ -1005,6 +1005,7 @@ class BackEndUtils:
         for i in range(1, len(email)):
             if email[-i] == ".":
                 dotindex = email.index(email[-i])
+        dotindicies = [i for i in range(len(email)) if email[i] == "."]
         if (atindex == 0) or (dotindex <= atindex + 1):
             return ("This email is invalid.")
         if " " in email:
