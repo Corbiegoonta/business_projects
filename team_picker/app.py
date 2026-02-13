@@ -29,8 +29,8 @@ def home():
 @app.route('/pick_team_logged_in')
 def pick_team():
     user = request.cookies.get('user', None)
-    if user is None:
-        return render_template_string(PICK_TEAM_HTML)
+    # if user is None:
+    #     return render_template_string(PICK_TEAM_HTML)
     return render_template_string(PICK_TEAM_HTML_LOGGED_IN, user=user)
 
 @app.route('/pick_team_not_logged_in')
