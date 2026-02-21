@@ -21,9 +21,9 @@ def home():
     print("User from cookie:", user)
     print(type(user))
     response = make_response(render_template_string(NEW_HOME_HTML, user=user))
-    user_email = DBUtils.get_user_email_from_username(user)
-    if user is not None and user_email is not None:
-        response.set_cookie('email', user_email, max_age=60*60*24*7)
+    # username = DBUtils.get_user_email_from_username(user)
+    # if user is not None:
+    #     response.set_cookie('email', username, max_age=60*60*24*7)
     return response
 
 @app.route('/pick_team_logged_in')
