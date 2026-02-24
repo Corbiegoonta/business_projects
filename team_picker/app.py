@@ -273,8 +273,11 @@ def request_password_reset():
         else:
             if DBUtils.check_database_for_email(email):
                 token = secrets.token_urlsafe(32)
+                username = DBUtils.get_username_from_email(email)
+                print("Username:", username)
+                print("Email:", email)
                 print("Token:", token)
-                DBUtils.put_password_reset_token_in_db(email, token)
+                DBUtils.put_password_reset_token_in_db(username, email, token)
                 reset_link = f"https://team-picker-e3k0.onrender.com/reset_password?token={token}"
                 print(f"Password reset link for {email}: {reset_link}")
                 BackEndUtils.send_password_reset_email(email, reset_link)
