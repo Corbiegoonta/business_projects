@@ -828,6 +828,17 @@ class DBUtils:
             return True
         return False
 
+    def get_username_from_email(email: str) -> str | None:
+        """Retrieve the username for a given email from the users table in the specified database."""
+        connection = sqlalchemy_engine.connect()
+        query = f"SELECT username FROM users WHERE email = :email;"
+        with connection as conn:
+            result = conn.execute(sqlalchemy.text(query), {"email": email})
+            row = result.fetchone()
+        if row:
+            return row[0]
+        return None
+    
     def put_password_reset_token_in_db(username: str, email: str, token: str):
         """Store password reset token in database with expiry"""
         connection = sqlalchemy_engine.connect()
