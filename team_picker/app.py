@@ -282,7 +282,7 @@ def request_password_reset():
             'status': 200, 
         })
     except Exception as e:
-        print(f"Error during password reset request: {e}")
+        print(f"Error during password reset request: {e}. Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
         return jsonify({'error': 'An error occurred while processing the request.', 'status': 500}), 500
            # Check if user exists in your database
     # This is a placeholder - replace with your actual user lookup
