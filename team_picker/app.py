@@ -348,7 +348,7 @@ def submit_password_reset():
             confirm_password = data.get('confirm_password')
             if not confirm_password or confirm_password != new_password:
                 return jsonify({'error': 'Passwords do not match', 'status': 400}), 400
-            DBUtils.replace_user_password(email, confirm_password, database_name="testing")  
+            DBUtils.replace_user_password(email, confirm_password)  
         else:
             return jsonify({'error': password_is_valid, 'status': 400}), 400
         
