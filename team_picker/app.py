@@ -88,6 +88,8 @@ def login():
     password = data.get('password', 'No password')
 
     try:
+        print(f"Attempting login for: {emailusername}")
+        print(f"Password provided: {password}")  # Don't print the actual password
         resp, uname = BackEndUtils.authenticate_user(emailusername, password)
         if resp is True:
             # Check if account is activated
