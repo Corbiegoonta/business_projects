@@ -24,7 +24,7 @@ def home():
     # username = DBUtils.get_user_email_from_username(user)
     # if user is not None:
     #     response.set_cookie('email', username, max_age=60*60*24*7)
-    return response
+    return response 
 
 @app.route('/pick_team_logged_in')
 def pick_team():
@@ -271,7 +271,7 @@ def request_password_reset():
         if not email:
             return jsonify({'error': 'Email is required', 'status': 400}), 400
         else:
-            if DBUtils.check_database_for_email(email, database_name="testing"):
+            if DBUtils.check_database_for_email(email):
                 token = secrets.token_urlsafe(32)
                 DBUtils.put_password_reset_token_in_db(email, token)
                 reset_link = f"https://team-picker-e3k0.onrender.com/reset_password?token={token}"
