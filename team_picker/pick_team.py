@@ -35,7 +35,7 @@ RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 resend.api_key = RESEND_API_KEY
 
 # sqlalchemy_engine = sqlalchemy.create_engine(f'postgresql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/testing')
-sqlalchemy_engine = sqlalchemy.create_engine('postgresql://testing_70hf_user:RhDNPOBOz0Lo8UlSiRIIYFE7Dt6yfv1Z@dpg-d5rluacoud1c73eo14c0-a/testing_70hf')
+sqlalchemy_engine = sqlalchemy.create_engine('postgresql://team_picker_db_1_user:LJAUL67BHkSlm6htPZ2XSzQ6OD2Sw76J@dpg-d6j0om1aae7s73ei5dl0-a/team_picker_db_1')
 connection = sqlalchemy_engine.connect()
 session = Session(sqlalchemy_engine)
 metadata = sqlalchemy.MetaData()
