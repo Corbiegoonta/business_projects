@@ -499,7 +499,7 @@ class Players:
 if sqlalchemy_engine.dialect.has_table(connection, "matches"):
     matches_table = sqlalchemy.Table('matches', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 else:
-    Tables.create_matches_table(database_name="testing")
+    Tables.create_matches_table()
     matches_table = sqlalchemy.Table('matches', sqlalchemy.MetaData(), autoload_with=sqlalchemy_engine)
 
 if sqlalchemy_engine.dialect.has_table(connection, "players"):
