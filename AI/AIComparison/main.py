@@ -17,29 +17,29 @@ load_dotenv()
 
 # print("Environment Variables Loaded: ", env)
 
-def openai_api_chat(model="gpt-4.1", api_key=os.getenv("OPENAI_KEY"), input_text=""):
+def openai_api_chat(model="gpt-5.2", api_key=os.getenv("OPENAI_KEY"), prompt=""):
     
     client = OpenAI(api_key=api_key)
 
     response = client.responses.create(
         model=model,
-        input=input_text
+        input=prompt
     )
 
     print("OpenAI ChatGPT reponse: ", response.output_text, "\n")
-    return model, response, response.output_text, input_text
+    return model, response, response.output_text, prompt
 
-def google_api_chat(model="gemini-2.0-flash", api_key=os.getenv("GOOGLE_KEY"), input_text=""):
+def google_api_chat(model="gemini-3-flash-preview", api_key=os.getenv("GOOGLE_KEY"), prompt=""):
 
     client = genai.Client(api_key=api_key)
 
     response = client.models.generate_content(
-        model=model, contents=input_text
+        model=model, contents=prompt
     )
     print("Google Gemini reponse: ", response.text, "\n")
-    return model, response, response.text, input_text
+    return model, response, response.text, prompt
 
-def anthropic_api_chat(model="claude-3-7-sonnet-20250219", api_key=os.getenv("ANTHROPIC_KEY"), input_text=""):
+def anthropic_api_chat(model="claude-3-7-sonnet-20250219", api_key=os.getenv("ANTHROPIC_KEY"), prompt=""):
 
     client = Anthropic(
     api_key=api_key,
@@ -49,12 +49,12 @@ def anthropic_api_chat(model="claude-3-7-sonnet-20250219", api_key=os.getenv("AN
         model=model,
         max_tokens=1024,
         messages=[
-            {"role": "user", "content": "Hello, Claude"}
+            {"role": "user", "content": prompt}
         ]
     )
     print(message.content)
 
-def huggingface_chats(api_key=os.getenv("HUGGINGFACE_KEY"), prompt= ""):
+def huggingface_chats(model="Qwen/Qwen2.5-7B-Instruct-1M:featherless-ai", api_key=os.getenv("HUGGINGFACE_KEY"), prompt= ""):
 
     client = InferenceClient(
         
@@ -69,7 +69,7 @@ def huggingface_chats(api_key=os.getenv("HUGGINGFACE_KEY"), prompt= ""):
     ]
 
     completion = client.chat.completions.create(
-        model="meta-llama/Llama-3.3-70B-Instruct",
+        model= model,
         messages=messages,
         temperature=2,
         max_tokens=600,
@@ -80,7 +80,7 @@ def huggingface_chats(api_key=os.getenv("HUGGINGFACE_KEY"), prompt= ""):
 
 def deepseek_chat(api_key=os.getenv("DEEPSEEK_KEY"), prompt=""):
 
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
     response = client.chat.completions.create(
         model="deepseek-chat",
@@ -95,7 +95,11 @@ def deepseek_chat(api_key=os.getenv("DEEPSEEK_KEY"), prompt=""):
 
 if __name__ == "__main__":
     prompt = "Which ai model is the best?"
-    openai_api_chat(input_text=prompt)
-    google_api_chat(input_text=prompt)
-    huggingface_chats(prompt=prompt)
-    deepseek_chat(prompt=prompt)
+    try:
+        # openai_api_chat(prompt=prompt) #not working because api calls not free
+        # google_api_chat(prompt=prompt) #working
+        # huggingface_chats(prompt=prompt) #calls other models
+        # deepseek_chat(prompt=prompt) # seems like it's not free
+        anthropic_api_chat(prompt=prompt) #not free
+    except Exception as e:
+        print("Error: ", e)

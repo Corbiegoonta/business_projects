@@ -1282,3 +1282,101 @@ window.addEventListener('load', function() {
 </body>
 </html>
 """
+
+
+def render_token_expired_page(token):   
+    # Check if token expired
+    token_data = reset_tokens[token]
+    if datetime.now() > token_data['expires']:
+        del reset_tokens[token]
+        return render_template_string("""
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Token Expired</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    }
+                    .card {
+                        background: #fff;
+                        padding: 40px;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                        text-align: center;
+                        max-width: 400px;
+                    }
+                    h2 { color: #dc3545; }
+                    button {
+                        margin: 10px;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        border: none;
+                        background: #667eea;
+                        color: #fff;
+                        cursor: pointer;
+                        font-weight: 600;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>⏰ Token Expired</h2>
+                    <p>This password reset link has expired. Please request a new one.</p>
+                    <button onclick="location.href='/forgot_password'">Request New Link</button>
+                    <button onclick="location.href='/'">Return Home</button>
+                </div>
+            </body>
+            </html>
+        """)
+    
+    if not token or token not in reset_tokens:
+        return jsonify({'error': 'Invalid or expired token', 'status': 400}), 400
+    
+    token_data = reset_tokens[token]
+    
+    # Check if token expired
+    if datetime.now() > token_data['expires']:
+        del reset_tokens[token]
+        return jsonify({'error': 'Token has expired', 'status': 400}), 400
+    
+    if not new_password or len(new_password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters', 'status': 400}), 400
+    
+    if new_password != confirm_password:
+        return jsonify({'error': 'Passwords do not match', 'status': 400}), 400
+    
+    # Update password in database
+    email = token_data['email']
+    
+    # Hash the new password
+    hashed_password = hashlib.sha256(new_password.encode()).hexdigest()
+    
+    # Update in database (replace with your actual DB update)
+    # db.users.update_one(
+    #     {'email': email},
+    #     {'$set': {'password': hashed_password}}
+    # )
+    
+    # Remove used token
+    del reset_tokens[token]
+
+
+  .modal-content {
+    background: #fff;
+    width: 90%;
+    max-width: 380px;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    text-align: center;
+}
+user_id: 'YOUR_USER_ID', // Replace with actual user ID from session/auth
