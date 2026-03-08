@@ -156,7 +156,7 @@ def add_player():
 def update_player():
     data = request.get_json()
     username = request.cookies.get("user")
-    original_player_name = data.get('originalName', '')
+    original_player_name = data.get('old_name', '')
     new_player_name = data.get('name', '')
     wins = data.get('wins', None)
     draws = data.get('draws', None)
