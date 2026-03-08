@@ -1734,7 +1734,6 @@ h2, h4 { color: #333; }
     <div class="modal-content">
         <h3 id="modalTitle">Add New Player</h3>
         <input type="hidden" id="edit_original_name">
-        <h3>Add New Player</h3>
         <label>Name *</label>
         <input id="p_name" placeholder="Enter player name"/>
         <label>Wins</label>
