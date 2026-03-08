@@ -924,10 +924,11 @@ class DBUtils:
 
         return tokens
 
-    def put_activation_token_in_db(username: str, email: str, token: str):
+    def put_activation_token_in_db(email: str, token: str):
         """Store activation token in database with expiry"""
         connection = sqlalchemy_engine.connect()
         new_uuid = uuid.uuid4()
+        username = DBUtils.get_username_from_email(email=email)
         tokens_insert = sqlalchemy.insert(activation_tokens_table).values(
             activation_id=new_uuid,
             email=email,
