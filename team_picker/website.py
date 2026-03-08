@@ -1943,9 +1943,8 @@ async function submitEditPlayer() {
 }
 
 async function deletePlayer(){
-    const name = document.getElementById('edit_original_name').value;
-    document.getElementById('deleteModal').style.display = 'block';
-    
+    if (confirm("Are you sure you want to delete the player `" + escapeHtml(document.getElementById('edit_original_name').value) + "`? This action cannot be undone.")) {
+    const name = document.getElementById('edit_original_name').value;    
     try {
         const resp = await fetch('/delete_player', {
             method:'POST',
@@ -1967,10 +1966,6 @@ async function deletePlayer(){
     } catch(e) {
         alert('Error: ' + e.message);
     }
-}
-
-function closeDeletePlayer(){
-    document.getElementById('deleteModal').style.display = 'none';
 }
 
 async function fetchPlayers(){
