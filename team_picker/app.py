@@ -123,7 +123,7 @@ def logout():
 @app.route('/add_player', methods=['POST'])
 def add_player():
     data = request.get_json()
-    user_email = request.cookies.get("email")
+    username = request.cookies.get("user")
     player_name = data.get('name', '')
     wins = data.get('wins', 0)
     draws = data.get('draws', 0)
@@ -131,14 +131,14 @@ def add_player():
     number_of_games = data.get('number_of_games', wins + draws + losses)
     
     # created_by = request.cookies.get("user")
-    if not user_email:
+    if not username:
         return jsonify({"error": "Must be logged in to add players", "status": 401})
     try:    
         # user_email = DBUtils.get_user_email(user_email, database_name="testing")[0]
         player_check = DBUtils.check_if_player_in_db(player_name)
         if player_check is True:
             DBUtils.add_new_player_with_stats_to_db(
-                email=user_email,
+                username=username,
                 player_name=player_name, 
                 number_of_games=number_of_games, 
                 wins=wins, 
