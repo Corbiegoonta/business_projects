@@ -2216,54 +2216,6 @@ function escapeHtml(s){
     return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]); 
 }
 
-// Modal controls
-function openAddPlayer(){ document.getElementById('addModal').style.display='block' }
-function closeAddPlayer(){ 
-    document.getElementById('addModal').style.display='none';
-    document.getElementById('p_name').value = '';
-    document.getElementById('p_wins').value = '0';
-    document.getElementById('p_draws').value = '0';
-    document.getElementById('p_losses').value = '0';
-}
-
-async function submitAddPlayer(){
-    const name = document.getElementById('p_name').value.trim();
-    const wins = parseInt(document.getElementById('p_wins').value) || 0;
-    const draws = parseInt(document.getElementById('p_draws').value) || 0;
-    const losses = parseInt(document.getElementById('p_losses').value) || 0;
-    const number_of_games = wins + draws + losses;
-    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(0) : 0;
-    
-    // 2. Validation: Check for negative numbers or NaN (Not a Number)
-    if (wins < 0 || draws < 0 || losses < 0 || isNaN(wins) || isNaN(draws) || isNaN(losses)) {
-        alert("Please enter valid whole numbers (0 or greater).");
-        return; // Stop the function here
-    }
-    
-    if (!name){ alert('Name is required'); return; }
-    
-    try {
-        const resp = await fetch('/add_player', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({name, wins, draws, losses, number_of_games, points_win_rate})
-        });
-        const data = await resp.json();
-        
-        if (!resp.ok || data.error){ 
-            alert(data.error || 'Error adding player'); 
-            return; 
-        }
-        
-        players.push({name, wins, draws, losses, number_of_games, points_win_rate});
-        renderPlayers();
-        closeAddPlayer();
-        alert('Player added successfully!');
-    } catch(e) {
-        alert('Error: ' + e.message);
-    }
-}
-
 async function autoSelect(){
     const n = parseInt(document.getElementById('numPlayers').value);
     const totalNeeded = n * 2;
