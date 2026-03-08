@@ -17,7 +17,7 @@ app.secret_key = 'your-secret-key-here-change-in-production'  # Required for ses
 
 @app.route('/')
 def home():
-    user = request.cookies.get('user', None)
+    user = request.cookies.get('username', None)
     print("User from cookie:", user)
     print(type(user))
     response = make_response(render_template_string(NEW_HOME_HTML, user=user))
