@@ -1944,6 +1944,7 @@ async function submitEditPlayer() {
 
 async function deletePlayer(){
     const name = document.getElementById('edit_original_name').value;
+    document.getElementById('deleteModal').style.display = 'block';
     
     try {
         const resp = await fetch('/delete_player', {
@@ -1966,6 +1967,10 @@ async function deletePlayer(){
     } catch(e) {
         alert('Error: ' + e.message);
     }
+}
+
+function closeDeletePlayer(){
+    document.getElementById('deleteModal').style.display = 'none';
 }
 
 async function fetchPlayers(){
@@ -2021,7 +2026,7 @@ function renderPlayers(){
                         style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
                     Edit
                 </button>
-                <button onclick="deleteModal('${escapeHtml(p.name)}')" 
+                <button onclick="deletePlayer('${escapeHtml(p.name)}')" 
                         style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
                     Delete
                 </button>
