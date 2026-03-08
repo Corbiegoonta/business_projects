@@ -167,6 +167,7 @@ def update_player():
 
     try:
         player_check = DBUtils.check_if_player_in_db(original_player_name)
+        print(f"Player check for '{original_player_name}': {player_check}")
         if player_check is True:
             DBUtils.update_player_in_db(
                 username=username,
