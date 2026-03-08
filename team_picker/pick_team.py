@@ -701,10 +701,10 @@ class DBUtils:
 
         return player_pool
 
-    def update_player_in_db(original_name: str, new_name: str, wins: int | None, losses: int | None, draws: int | None):
+    def update_player_in_db(username: str, original_name: str, new_name: str, wins: int | None, losses: int | None, draws: int | None):
         """Update a player's stats in the players table in the specified database."""
         connection = sqlalchemy_engine.connect()
-        stmt = sqlalchemy.select(players_table).where(players_table.c.player_name == original_name)
+        stmt = sqlalchemy.select(players_table).where(players_table.c.created_by == username and players_table.c.player_name == original_name)
         df = pd.read_sql_query(stmt, connection)
         initial_wins = int(df.at[0, "wins"])
         initial_losses = int(df.at[0, "losses"])
@@ -1746,8 +1746,8 @@ class BackEndUtils:
         #     s.send_message(msg)
         #     print("Contact us acknowledgement email sent.")
 
-    def balance_teams(list_of_player_names: list, email: str):
-        all_players = DBUtils.retrieve_user_players(email)
+    def balance_teams(list_of_player_names: list, username: str):
+        all_players = DBUtils.retrieve_user_players(username)
         print(all_players[all_players["points_win_rate"].isna()])
         all_players.fillna(0, inplace=True)
         print(all_players[all_players["points_win_rate"].isna()]["points_win_rate"])
@@ -1778,7 +1778,7 @@ class BackEndUtils:
                 team_2 = [player for player in players_ids if player not in team_1]
 
             DBUtils.add_new_match_to_db(
-                email=email,
+                username=username,
                 team_1_players=team_1,
                 team_2_players=team_2
             )

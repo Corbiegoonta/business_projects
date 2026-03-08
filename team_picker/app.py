@@ -155,21 +155,21 @@ def add_player():
 @app.route('/update_player', methods=['POST'])
 def update_player():
     data = request.get_json()
-    user_email = request.cookies.get("email")
+    username = request.cookies.get("user")
     original_player_name = data.get('originalName', '')
     new_player_name = data.get('name', '')
     wins = data.get('wins', None)
     draws = data.get('draws', None)
     losses = data.get('losses', None)
 
-    if not user_email:
+    if not username:
         return jsonify({"error": "Must be logged in to update players", "status": 401})
 
     try:
         player_check = DBUtils.check_if_player_in_db(original_player_name)
         if player_check is True:
             DBUtils.update_player_in_db(
-                email=user_email,
+                username=username,
                 original_name=original_player_name,
                 new_name=new_player_name,
                 wins=wins,
@@ -185,15 +185,15 @@ def update_player():
 
 @app.route('/get_players', methods=['GET'])
 def get_players():
-    user_email = request.cookies.get("email")
-    print("User email from cookie:", user_email)
+    username = request.cookies.get("user")
+    print("User email from cookie:", username)
     # if not user_email:
     #     return jsonify({"error": "Must be logged in to add players", "status": 401})
 
     # user_uuid = DBUtils.get_user_uuid(user_email, database_name="testing")
     # Mock data - replace with actual database query
     try:
-        players = DBUtils.get_player_pool_from_db(user_email)
+        players = DBUtils.get_player_pool_from_db(username)
     except Exception as e:
         print(f"Error getting players: {e}")
         return jsonify({"error": "An error occurred while retrieving players.", "status": 500})
@@ -204,14 +204,14 @@ def get_players():
 def autoselect():
     data = request.get_json()
     n = data.get('n', 10)
-    created_by = request.cookies.get("email")
+    username = request.cookies.get("user")
     # if not created_by:
     #     return jsonify({"error": "Must be logged in to add players", "status": 401})
 
     # user_uuid = DBUtils.get_user_uuid(created_by, database_name="testing")[0]
     # Mock data - replace with actual database query
     try:
-        players = DBUtils.autoselect_players_from_db(email=created_by, number_of_players=n)
+        players = DBUtils.autoselect_players_from_db(username=username, number_of_players=n)
         print(players)
     except Exception as e:
         print(f"Error during player selection: {e}. Traceback: {traceback.format_exc()}, ErrorType: {type(e)}")
@@ -226,7 +226,7 @@ def autoselect():
 
 @app.route('/balanceteams', methods=['POST'])
 def balance_the_teams():
-    created_by = request.cookies.get("email")
+    username = request.cookies.get("user")
     data = request.get_json()
     teamA = data.get('teamA', [])
     teamB = data.get('teamB', [])
@@ -239,7 +239,7 @@ def balance_the_teams():
             for player in teamA + teamB:
                 player_names.append(player['name'])
             print("Balancing teams:", player_names)
-            teams = BackEndUtils.balance_teams(player_names, created_by)
+            teams = BackEndUtils.balance_teams(player_names, username)
         # Implement your balancing logic here
         # return jsonify({"message": "Teams balanced successfully"})
             return jsonify({"teamA": teams[0], "teamB": teams[1]})
@@ -249,15 +249,15 @@ def balance_the_teams():
 
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
-    created_by = request.cookies.get("email")
+    username = request.cookies.get("user")
 
     try:
-        if not created_by:
+        if not username:
             return jsonify({"error": "Must be logged in to delete account", "status": 401})
 
-        DBUtils.delete_user_account(created_by)
+        DBUtils.delete_user_account(username)
         response = jsonify({"message": "Account deleted successfully"})
-        response.set_cookie("email", "", expires=0)
+        response.set_cookie("user", None, expires=0)
         return response
     except Exception as e:
         print(f"Error deleting account: {e}")
