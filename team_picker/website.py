@@ -1729,42 +1729,39 @@ h2, h4 { color: #333; }
     </div>
 </div>
 
-<!-- Add Player Modal -->
 <div id="addModal" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Add New Player</h3>
-        <input type="hidden" id="edit_original_name">
+        <h3>Add New Player</h3>
         <label>Name *</label>
-        <input id="p_name" placeholder="Enter player name"/>
+        <input id="add_name" placeholder="Enter player name"/>
         <label>Wins</label>
-        <input id="p_wins" type="number" value="0" step="1" min="0"/>
+        <input id="add_wins" type="number" value="0" step="1" min="0"/>
         <label>Draws</label>
-        <input id="p_draws" type="number" value="0" step="1" min="0"/>
+        <input id="add_draws" type="number" value="0" step="1" min="0"/>
         <label>Losses</label>
-        <input id="p_losses" type="number" value="0" step="1" min="0"/>
+        <input id="add_losses" type="number" value="0" step="1" min="0"/>
         <div class="button-group">
-            <button onclick="closeAddPlayer()" class="secondary">Cancel</button>
-            <button id="submitBtn" onclick="submitPlayer()">Add Player</button>
+            <button onclick="closeAddModal()" class="secondary">Cancel</button>
+            <button onclick="submitAddPlayer()">Add Player</button>
         </div>
     </div>
 </div>
 
-<!-- Edit Player Modal -->
 <div id="editModal" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Edit Player</h3>
+        <h3>Edit Player</h3>
         <input type="hidden" id="edit_original_name">
         <label>Name *</label>
-        <input id="p_name" placeholder="Enter player name"/>
+        <input id="edit_name" placeholder="Enter player name"/>
         <label>Wins</label>
-        <input id="p_wins" type="number" value="0" step="1" min="0"/>
+        <input id="edit_wins" type="number" value="0" step="1" min="0"/>
         <label>Draws</label>
-        <input id="p_draws" type="number" value="0" step="1" min="0"/>
+        <input id="edit_draws" type="number" value="0" step="1" min="0"/>
         <label>Losses</label>
-        <input id="p_losses" type="number" value="0" step="1" min="0"/>
+        <input id="edit_losses" type="number" value="0" step="1" min="0"/>
         <div class="button-group">
-            <button onclick="closeAddPlayer()" class="secondary">Cancel</button>
-            <button id="submitBtn" onclick="submitPlayer()">Save Changes</button>
+            <button onclick="closeEditModal()" class="secondary">Cancel</button>
+            <button onclick="submitEditPlayer()">Save Changes</button>
         </div>
     </div>
 </div>
@@ -1782,70 +1779,106 @@ function init(){
     renderTeams();
 }
 
-// Open Modal for Editing
-function openEditPlayer(name) {
-    const p = players.find(player => player.name === name);
-    if (!p) return;
-
-    document.getElementById('modalTitle').textContent = 'Edit Player Stats';
-    document.getElementById('edit_original_name').value = p.name;
-    document.getElementById('p_name').value = p.name;
-    document.getElementById('p_wins').value = p.wins;
-    document.getElementById('p_draws').value = p.draws;
-    document.getElementById('p_losses').value = p.losses;
-    document.getElementById('submitBtn').textContent = 'Save Changes';
-    
-    document.getElementById('editModal').style.display = 'block';
-}
-
-// Reset modal when adding new
+// -------------------------
+// ADD PLAYER LOGIC
+// -------------------------
 function openAddPlayer() {
-    document.getElementById('modalTitle').textContent = 'Add New Player';
-    document.getElementById('edit_original_name').value = '';
-    document.getElementById('p_name').value = '';
-    document.getElementById('p_wins').value = '0';
-    document.getElementById('p_draws').value = '0';
-    document.getElementById('p_losses').value = '0';
-    document.getElementById('submitBtn').textContent = 'Add Player';
+    document.getElementById('add_name').value = '';
+    document.getElementById('add_wins').value = '0';
+    document.getElementById('add_draws').value = '0';
+    document.getElementById('add_losses').value = '0';
     document.getElementById('addModal').style.display = 'block';
 }
 
-async function submitPlayer() {
-    const originalName = document.getElementById('edit_original_name').value;
-    const name = document.getElementById('p_name').value.trim();
-    const wins = parseInt(document.getElementById('p_wins').value) || 0;
-    const draws = parseInt(document.getElementById('p_draws').value) || 0;
-    const losses = parseInt(document.getElementById('p_losses').value) || 0;
+function closeAddModal() {
+    document.getElementById('addModal').style.display = 'none';
+}
+
+async function submitAddPlayer() {
+    const name = document.getElementById('add_name').value.trim();
+    const wins = parseInt(document.getElementById('add_wins').value) || 0;
+    const draws = parseInt(document.getElementById('add_draws').value) || 0;
+    const losses = parseInt(document.getElementById('add_losses').value) || 0;
     
-    // Validation
     if (wins < 0 || draws < 0 || losses < 0 || isNaN(wins) || isNaN(draws) || isNaN(losses)) {
         alert("Please enter valid whole numbers (0 or greater).");
         return; 
     }
     if (!name) { alert('Name is required'); return; }
 
-    // Stats calculations
     const number_of_games = wins + draws + losses;
     const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(2) : 0;
 
-    const isEdit = originalName !== "";
-    const url = isEdit ? '/update_player' : '/add_player';
-    const payload = { 
-        name, wins, draws, losses, number_of_games, points_win_rate,
-        old_name: isEdit ? originalName : undefined 
-    };
-
     try {
-        const resp = await fetch(url, {
+        const resp = await fetch('/add_player', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ name, wins, draws, losses, number_of_games, points_win_rate })
         });
         
         if (resp.ok) {
             await fetchPlayers(); 
-            closeAddPlayer();
-            alert(isEdit ? 'Player updated!' : 'Player added!');
+            closeAddModal();
+            alert('Player added!');
+        } else {
+            const data = await resp.json();
+            alert(data.error || 'Operation failed');
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+// -------------------------
+// EDIT PLAYER LOGIC
+// -------------------------
+function openEditPlayer(name) {
+    const p = players.find(player => player.name === name);
+    if (!p) return;
+
+    document.getElementById('edit_original_name').value = p.name;
+    document.getElementById('edit_name').value = p.name;
+    document.getElementById('edit_wins').value = p.wins;
+    document.getElementById('edit_draws').value = p.draws;
+    document.getElementById('edit_losses').value = p.losses;
+    
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+async function submitEditPlayer() {
+    const originalName = document.getElementById('edit_original_name').value;
+    const name = document.getElementById('edit_name').value.trim();
+    const wins = parseInt(document.getElementById('edit_wins').value) || 0;
+    const draws = parseInt(document.getElementById('edit_draws').value) || 0;
+    const losses = parseInt(document.getElementById('edit_losses').value) || 0;
+    
+    if (wins < 0 || draws < 0 || losses < 0 || isNaN(wins) || isNaN(draws) || isNaN(losses)) {
+        alert("Please enter valid whole numbers (0 or greater).");
+        return; 
+    }
+    if (!name) { alert('Name is required'); return; }
+
+    const number_of_games = wins + draws + losses;
+    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(2) : 0;
+
+    try {
+        const resp = await fetch('/update_player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                name, wins, draws, losses, number_of_games, points_win_rate,
+                old_name: originalName 
+            })
+        });
+        
+        if (resp.ok) {
+            await fetchPlayers(); 
+            closeEditModal();
+            alert('Player updated!');
         } else {
             const data = await resp.json();
             alert(data.error || 'Operation failed');
