@@ -1749,6 +1749,26 @@ h2, h4 { color: #333; }
     </div>
 </div>
 
+<!-- Edit Player Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Edit Player</h3>
+        <input type="hidden" id="edit_original_name">
+        <label>Name *</label>
+        <input id="p_name" placeholder="Enter player name"/>
+        <label>Wins</label>
+        <input id="p_wins" type="number" value="0" step="1" min="0"/>
+        <label>Draws</label>
+        <input id="p_draws" type="number" value="0" step="1" min="0"/>
+        <label>Losses</label>
+        <input id="p_losses" type="number" value="0" step="1" min="0"/>
+        <div class="button-group">
+            <button onclick="closeEditPlayer()" class="secondary">Cancel</button>
+            <button onclick="submitEditPlayer()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let players = [];
 let teamA = [];
