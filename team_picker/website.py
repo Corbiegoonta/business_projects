@@ -1815,7 +1815,7 @@ h2, h4 { color: #333; }
         <p>Are you sure you want to delete this player? Once deleted, the player cannot be recovered.</p>
         <div class="button-group">
             <button onclick="closeDeletePlayer()" class="secondary">Cancel</button>
-            <button onclick="submitDeletePlayer()" style="background: #dc3545;">Delete</button>
+            <button onclick="deletePlayer()" style="background: #dc3545;">Delete</button>
         </div>
     </div>
 </div>
@@ -1942,7 +1942,7 @@ async function submitEditPlayer() {
     }
 }
 
-async function submitDeletePlayer(){
+async function deletePlayer(){
     const name = document.getElementById('edit_original_name').value;
     
     try {
@@ -2021,7 +2021,7 @@ function renderPlayers(){
                         style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
                     Edit
                 </button>
-                <button onclick="deletePlayer('${escapeHtml(p.name)}')" 
+                <button onclick="deleteModal('${escapeHtml(p.name)}')" 
                         style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
                     Delete
                 </button>
