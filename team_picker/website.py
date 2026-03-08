@@ -1808,6 +1808,18 @@ h2, h4 { color: #333; }
     </div>
 </div>
 
+<!-- Confirm Delete Player Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirm Delete</h3>
+        <p>Are you sure you want to delete this player? Once deleted, the player cannot be recovered.</p>
+        <div class="button-group">
+            <button onclick="closeDeletePlayer()" class="secondary">Cancel</button>
+            <button onclick="submitDeletePlayer()" style="background: #dc3545;">Delete</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let players = [];
 let teamA = [];
@@ -1926,6 +1938,32 @@ async function submitEditPlayer() {
             alert(data.error || 'Operation failed');
         }
     } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+async function submitDeletePlayer(){
+    const name = document.getElementById('edit_original_name').value;
+    
+    try {
+        const resp = await fetch('/delete_player', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({name})
+        });
+        const data = await resp.json();
+        
+        if (!resp.ok || data.error){ 
+            alert(data.error || 'Delete failed'); 
+            return; 
+        }
+        
+        // Remove player from local array
+        players = players.filter(p => p.name !== name);
+        renderPlayers();
+        closeDeletePlayer();
+        alert('Player deleted successfully!');
+    } catch(e) {
         alert('Error: ' + e.message);
     }
 }
