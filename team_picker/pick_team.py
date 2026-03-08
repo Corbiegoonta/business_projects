@@ -776,8 +776,8 @@ class DBUtils:
             result = conn.execute(sqlalchemy.text(query))
             row = result.fetchone()
         if row:
-            return "A player with this name already exists."
-        return True
+            return True
+        return False
 
     def get_user_email_from_username(username: str) -> str | None:
         """Retrieve the user email for a given username or email from the users table in the specified database."""
