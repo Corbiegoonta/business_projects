@@ -706,6 +706,7 @@ class DBUtils:
         connection = sqlalchemy_engine.connect()
         stmt = sqlalchemy.select(players_table).where(players_table.c.created_by == username and players_table.c.player_name == original_name)
         df = pd.read_sql_query(stmt, connection)
+        print(df)
         initial_wins = int(df.at[0, "wins"])
         initial_losses = int(df.at[0, "losses"])
         initial_draws = int(df.at[0, "draws"])
@@ -730,6 +731,7 @@ class DBUtils:
         with connection as conn:
             conn.execute(stmt)
             conn.commit()
+        print("Player updated successfully.")
 
     def autoselect_players_from_db(username: str, number_of_players: int) -> list[dict]:
         """Automatically select a specified number of players from the players table in the database for a specific user and return as a list of dictionaries."""
