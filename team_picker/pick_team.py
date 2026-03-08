@@ -1016,8 +1016,8 @@ class DBUtils:
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query), {"username": username})
             row = result.fetchone()
-        
         return row[0]
+   
 
     def get_email_from_username(username: str) -> str | None:
         """Get email address from username"""
