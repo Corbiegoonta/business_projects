@@ -2021,6 +2021,10 @@ function renderPlayers(){
                         style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
                     Edit
                 </button>
+                <button onclick="deletePlayer('${escapeHtml(p.name)}')" 
+                        style="padding: 2px 8px; font-size: 10px; background: rgba(255,255,255,0.2);">
+                    Delete
+                </button>
             </div>
             <div class="stats">W:${p.wins} D:${p.draws} L:${p.losses} PR:${(p.points_win_rate * 100).toFixed(0)}% | Games:${p.number_of_games || 0}</div>
         `;
