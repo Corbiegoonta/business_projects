@@ -733,6 +733,15 @@ class DBUtils:
             conn.commit()
         print("Player updated successfully.")
 
+    def delete_player_from_db(username: str, player_name: str):
+        """Delete a player from the players table in the specified database."""
+        connection = sqlalchemy_engine.connect()
+        stmt = players_table.delete().where(players_table.c.created_by == username and players_table.c.player_name == player_name)
+        with connection as conn:
+            conn.execute(stmt)
+            conn.commit()
+        print("Player deleted successfully.")
+
     def autoselect_players_from_db(username: str, number_of_players: int) -> list[dict]:
         """Automatically select a specified number of players from the players table in the database for a specific user and return as a list of dictionaries."""
         sel = sqlalchemy.select(players_table).where(players_table.c.created_by == username)

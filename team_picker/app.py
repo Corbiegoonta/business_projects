@@ -201,6 +201,22 @@ def get_players():
 
     return jsonify({"players": players})
 
+@app.route('/delete_player', methods=['POST'])
+def delete_player():
+    data = request.get_json()
+    username = request.cookies.get("user")
+    player_name = data.get('name')
+
+    if not username:
+        return jsonify({"error": "Must be logged in to delete players", "status": 401})
+
+    try:
+        DBUtils.delete_player_from_db(username, player_name)
+        return jsonify({"message": "Player deleted successfully", "status": 200})
+    except Exception as e:
+        print(f"Error deleting player: {e}")
+        return jsonify({"error": "An error occurred while deleting the player.", "status": 500})
+
 @app.route('/autoselect', methods=['POST'])
 def autoselect():
     data = request.get_json()
