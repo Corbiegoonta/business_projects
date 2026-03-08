@@ -95,9 +95,14 @@ def login():
             # Check if account is activated
             email = emailusername if '@' in emailusername else DBUtils.get_email_from_username(emailusername)
             print(f"Checking activation status for email: {email} and username: {uname}")
-            if DBUtils.is_user_activated(email) == 0:
+            if DBUtils.is_user_activated(email) == None:
                 return jsonify({
-                    "error": "Please activate your account. Check your email for the activation link.",
+                    "error": "User not found. Please check your email/username and try again.",
+                    "status": 404
+                })
+            elif DBUtils.is_user_activated(email) == 0:
+                return jsonify({
+                    "error": "Your account is not activated. Please check your email for the activation link.",
                     "status": 403
                 })
             response = jsonify({"message": "Login Successful", "status": 200})
