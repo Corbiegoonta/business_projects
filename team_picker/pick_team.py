@@ -1009,16 +1009,18 @@ class DBUtils:
             conn.execute(sqlalchemy.text(query), {"username": username, "expires_at": datetime.datetime.now()})
             conn.commit()
 
-    def is_user_activated(username: str) -> int:
+    def is_user_activated(username: str) -> int | None:
         """Check if user account is activated"""
         connection = sqlalchemy_engine.connect()
         query = f"SELECT is_active FROM users WHERE username = :username"
         with connection as conn:
             result = conn.execute(sqlalchemy.text(query), {"username": username})
             row = result.fetchone()
-        return row[0]
+            print(row)
+        if row:
+            return row[0]
+        return None
    
-
     def get_email_from_username(username: str) -> str | None:
         """Get email address from username"""
         connection = sqlalchemy_engine.connect()
