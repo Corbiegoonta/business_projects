@@ -1744,27 +1744,7 @@ h2, h4 { color: #333; }
         <input id="p_losses" type="number" value="0" step="1" min="0"/>
         <div class="button-group">
             <button onclick="closeAddPlayer()" class="secondary">Cancel</button>
-            <button onclick="submitAddPlayer()">Add Player</button>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Player Modal -->
-<div id="editModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle">Edit Player</h3>
-        <input type="hidden" id="edit_original_name">
-        <label>Name *</label>
-        <input id="p_name" placeholder="Enter player name"/>
-        <label>Wins</label>
-        <input id="p_wins" type="number" value="0" step="1" min="0"/>
-        <label>Draws</label>
-        <input id="p_draws" type="number" value="0" step="1" min="0"/>
-        <label>Losses</label>
-        <input id="p_losses" type="number" value="0" step="1" min="0"/>
-        <div class="button-group">
-            <button onclick="closeEditPlayer()" class="secondary">Cancel</button>
-            <button onclick="submitEditPlayer()">Save Changes</button>
+            <button id="submitBtn" onclick="submitPlayer()">Add Player</button>
         </div>
     </div>
 </div>
@@ -1817,12 +1797,21 @@ async function submitPlayer() {
     const draws = parseInt(document.getElementById('p_draws').value) || 0;
     const losses = parseInt(document.getElementById('p_losses').value) || 0;
     
+    // Validation
+    if (wins < 0 || draws < 0 || losses < 0 || isNaN(wins) || isNaN(draws) || isNaN(losses)) {
+        alert("Please enter valid whole numbers (0 or greater).");
+        return; 
+    }
     if (!name) { alert('Name is required'); return; }
+
+    // Stats calculations
+    const number_of_games = wins + draws + losses;
+    const points_win_rate = number_of_games > 0 ? ((wins * 3 + draws) / (number_of_games * 3)).toFixed(2) : 0;
 
     const isEdit = originalName !== "";
     const url = isEdit ? '/update_player' : '/add_player';
     const payload = { 
-        name, wins, draws, losses, 
+        name, wins, draws, losses, number_of_games, points_win_rate,
         old_name: isEdit ? originalName : undefined 
     };
 
@@ -1834,7 +1823,6 @@ async function submitPlayer() {
         });
         
         if (resp.ok) {
-            // Refresh the local players list
             await fetchPlayers(); 
             closeAddPlayer();
             alert(isEdit ? 'Player updated!' : 'Player added!');
