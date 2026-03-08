@@ -1943,7 +1943,7 @@ async function submitEditPlayer() {
 }
 
 async function deletePlayer(){
-    if (confirm("Are you sure you want to delete the player `" + escapeHtml(document.getElementById('edit_original_name').value) + "`? This action cannot be undone.")) {
+    if (confirm("Are you sure you want to delete this player? This action cannot be undone.")) {
     const name = document.getElementById('edit_original_name').value;    
     try {
         const resp = await fetch('/delete_player', {
