@@ -960,12 +960,12 @@ class DBUtils:
 
     #     return row[0] if row else None
 
-    def activate_user_account(username: str):
+    def activate_user_account(email: str):
         """Set user account as active"""
         connection = sqlalchemy_engine.connect()
-        query = "UPDATE users SET is_active = 1, activated_at = :datetime WHERE username = :username;"
+        query = "UPDATE users SET is_active = 1, activated_at = :datetime WHERE email = :email;"
         with connection as conn:
-            conn.execute(sqlalchemy.text(query), {"datetime": datetime.datetime.now(), "username": username})
+            conn.execute(sqlalchemy.text(query), {"datetime": datetime.datetime.now(), "email": email})
             conn.commit()
 
     def delete_activation_token(token: str):
