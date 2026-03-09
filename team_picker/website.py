@@ -1881,7 +1881,6 @@ async function submitAddPlayer() {
     } catch (e) {
         alert('Error: ' + e.message);
     }
-    }
 }
 
 // -------------------------
